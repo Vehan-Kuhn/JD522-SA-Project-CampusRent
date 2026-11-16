@@ -47,7 +47,7 @@ public class BookingPanel extends JPanel {
         JButton createButton = new JButton("Create Booking");
 
         createButton.setBackground(new Color(41, 128, 185));
-        createButton.setForeground(Color.WHITE);
+        createButton.setForeground(new Color(41, 128, 185));
         createButton.setFocusPainted(false);
 
         gbc.gridx = 1;
@@ -72,8 +72,7 @@ public class BookingPanel extends JPanel {
                 java.time.LocalDate due =
                         java.time.LocalDate.parse(dueDate.getText());
 
-                if (due.isBefore(start)) {
-                    throw new IllegalArgumentException(
+                if (due.isBefore(start)) {throw new IllegalArgumentException(
                             "The due date cannot be before the start date."
                     );
                 }
