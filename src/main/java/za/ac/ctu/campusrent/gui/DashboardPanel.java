@@ -1,4 +1,3 @@
-
 package za.ac.ctu.campusrent.gui;
 
 import javax.swing.*;

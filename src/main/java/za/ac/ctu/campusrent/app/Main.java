@@ -1,7 +1,5 @@
 package za.ac.ctu.campusrent.app;
-
 import za.ac.ctu.campusrent.gui.MainFrame;
-
 import javax.swing.SwingUtilities;
 import javax.swing.UIManager;
 
