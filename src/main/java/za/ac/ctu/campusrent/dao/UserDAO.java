@@ -1,17 +1,13 @@
-
 package za.ac.ctu.campusrent.dao;
-
 import za.ac.ctu.campusrent.model.User;
 import za.ac.ctu.campusrent.util.DBConnection;
-
 import java.sql.*;
-import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
 public class UserDAO {
 
-    // Add a user
+    // Add a user.
     public int addUser(User user) throws SQLException {
         String sql = """
                 INSERT INTO app_user
@@ -19,6 +15,7 @@ public class UserDAO {
                  password_hash, user_role, account_status)
                 VALUES (?, ?, ?, ?, ?, ?, ?, ?)
                 """;
+
         try (Connection connection = DBConnection.getConnection();
              PreparedStatement statement = connection.prepareStatement(
                      sql, Statement.RETURN_GENERATED_KEYS)) {
@@ -46,12 +43,13 @@ public class UserDAO {
         throw new SQLException("Creating user failed: no ID returned.");
     }
 
-    // Retrieve a user by ID
+    // Retrieve a user by ID.
     public User getUserById(int userId) throws SQLException {
-
         String sql = "SELECT * FROM app_user WHERE user_id = ?";
+
         try (Connection connection = DBConnection.getConnection();
              PreparedStatement statement = connection.prepareStatement(sql)) {
+
             statement.setInt(1, userId);
 
             try (ResultSet resultSet = statement.executeQuery()) {
@@ -64,9 +62,13 @@ public class UserDAO {
         return null;
     }
 
-    // Retrieve a user by email
+    // Retrieve a user by email.
     public User getUserByEmail(String email) throws SQLException {
-        String sql = "SELECT * FROM app_user WHERE email = ?";
+        String sql = """
+                SELECT * FROM app_user
+                WHERE LOWER(email) = LOWER(?)
+                """;
+
         try (Connection connection = DBConnection.getConnection();
              PreparedStatement statement = connection.prepareStatement(sql)) {
 
@@ -82,7 +84,7 @@ public class UserDAO {
         return null;
     }
 
-    // Retrieve all users
+    // Retrieve all users.
     public List<User> getAllUsers() throws SQLException {
         List<User> users = new ArrayList<>();
         String sql = "SELECT * FROM app_user";
@@ -99,7 +101,7 @@ public class UserDAO {
         return users;
     }
 
-    // Update a user
+    // Update a user.
     public boolean updateUser(User user) throws SQLException {
         String sql = """
                 UPDATE app_user
@@ -126,9 +128,8 @@ public class UserDAO {
         }
     }
 
-    // Delete a user
+    // Delete a user.
     public boolean deleteUser(int userId) throws SQLException {
-
         String sql = "DELETE FROM app_user WHERE user_id = ?";
 
         try (Connection connection = DBConnection.getConnection();
@@ -139,9 +140,8 @@ public class UserDAO {
         }
     }
 
-    // Convert a database row into a User object
+    // Convert a database row into a User object.
     private User mapUser(ResultSet resultSet) throws SQLException {
-
         User user = new User();
         user.setUserId(resultSet.getInt("user_id"));
         user.setCampusId(resultSet.getInt("campus_id"));
@@ -157,6 +157,7 @@ public class UserDAO {
         if (timestamp != null) {
             user.setCreatedAt(timestamp.toLocalDateTime());
         }
+
         return user;
     }
 }

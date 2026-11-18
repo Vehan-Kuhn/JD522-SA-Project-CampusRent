@@ -1,7 +1,6 @@
 package za.ac.ctu.campusrent.model;
 
 /** Represents a Campus inside CampusRent **/
-
 public class Campus {
     //Instance variables
     private int campusId;
@@ -32,7 +31,7 @@ public class Campus {
         return campusId;
     }
 
-    public void setCampusId(int CampusId) {
+    public void setCampusId(int campusId) {
         this.campusId = campusId;
     }
 

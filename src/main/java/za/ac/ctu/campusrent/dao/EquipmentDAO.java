@@ -97,14 +97,101 @@ public class EquipmentDAO {
     }
 
     // Delete equipment
+    // Delete equipment only if it has no booking history
     public boolean deleteEquipment(int equipmentId) throws SQLException {
-        String sql = "DELETE FROM equipment WHERE equipment_id = ?";
+
+        String sql = """
+            DELETE FROM equipment
+            WHERE equipment_id = ?
+            AND NOT EXISTS (
+                SELECT 1
+                FROM booking
+                WHERE booking.equipment_id = equipment.equipment_id
+            )
+            """;
+
         try (Connection connection = DBConnection.getConnection();
              PreparedStatement statement = connection.prepareStatement(sql)) {
 
             statement.setInt(1, equipmentId);
             return statement.executeUpdate() > 0;
         }
+    }
+    /**
+     * Retrieves equipment using an existing transaction.
+     *
+     * When forUpdate is true, MySQL locks the equipment row
+     * until the transaction is committed or rolled back.
+     */
+    public Equipment getEquipmentById(
+            Connection connection,
+            int equipmentId,
+            boolean forUpdate) throws SQLException {
+
+        String sql = "SELECT * FROM equipment WHERE equipment_id = ?";
+
+        if (forUpdate) {
+            sql += " FOR UPDATE";
+        }
+
+        try (PreparedStatement statement = connection.prepareStatement(sql)) {
+
+            statement.setInt(1, equipmentId);
+
+            try (ResultSet resultSet = statement.executeQuery()) {
+                if (resultSet.next()) {
+                    return mapEquipment(resultSet);
+                }
+            }
+        }
+
+        return null;
+    }
+
+
+    /** Updates equipment availability using an existing transaction **/
+    public boolean updateAvailabilityStatus(
+            Connection connection,
+            int equipmentId,
+            String availabilityStatus) throws SQLException {
+
+        String sql = """
+            UPDATE equipment
+            SET availability_status = ?
+            WHERE equipment_id = ?
+            """;
+
+        try (PreparedStatement statement = connection.prepareStatement(sql)) {
+
+            statement.setString(1, availabilityStatus);
+            statement.setInt(2, equipmentId);
+
+            return statement.executeUpdate() > 0;
+        }
+    }
+
+    // Check whether equipment has any booking history
+    public boolean hasBookingHistory(int equipmentId) throws SQLException {
+
+        String sql = """
+            SELECT COUNT(*)
+            FROM booking
+            WHERE equipment_id = ?
+            """;
+
+        try (Connection connection = DBConnection.getConnection();
+             PreparedStatement statement = connection.prepareStatement(sql)) {
+
+            statement.setInt(1, equipmentId);
+
+            try (ResultSet resultSet = statement.executeQuery()) {
+                if (resultSet.next()) {
+                    return resultSet.getInt(1) > 0;
+                }
+            }
+        }
+
+        return false;
     }
 
     // Convert a database row into an Equipment object

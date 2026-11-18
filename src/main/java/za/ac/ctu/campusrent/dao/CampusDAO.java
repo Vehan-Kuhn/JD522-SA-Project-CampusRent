@@ -1,6 +1,4 @@
-
 package za.ac.ctu.campusrent.dao;
-
 import za.ac.ctu.campusrent.model.Campus;
 import za.ac.ctu.campusrent.util.DBConnection;
 import java.sql.*;
