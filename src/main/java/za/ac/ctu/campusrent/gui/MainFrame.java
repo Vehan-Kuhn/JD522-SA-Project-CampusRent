@@ -1,11 +1,9 @@
 package za.ac.ctu.campusrent.gui;
-
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import java.awt.*;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
-
 
  /** Main application window for CampusRent. **/
 
