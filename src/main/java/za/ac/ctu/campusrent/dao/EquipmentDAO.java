@@ -1,11 +1,41 @@
+
 package za.ac.ctu.campusrent.dao;
+
 import za.ac.ctu.campusrent.model.Equipment;
 import za.ac.ctu.campusrent.util.DBConnection;
+
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
-public class EquipmentDAO {
+public class EquipmentDAO implements GenericDAO<Equipment, Integer> {
+
+    // GenericDAO implementation
+    @Override
+    public Integer insert(Equipment equipment) throws SQLException {
+        return addEquipment(equipment);
+    }
+
+    @Override
+    public Optional<Equipment> findById(Integer id) throws SQLException {
+        return Optional.ofNullable(getEquipmentById(id));
+    }
+
+    @Override
+    public List<Equipment> findAll() throws SQLException {
+        return getAllEquipment();
+    }
+
+    @Override
+    public boolean update(Equipment equipment) throws SQLException {
+        return updateEquipment(equipment);
+    }
+
+    @Override
+    public boolean delete(Integer id) throws SQLException {
+        return deleteEquipment(id);
+    }
 
     // Add equipment
     public int addEquipment(Equipment equipment) throws SQLException {
@@ -19,6 +49,7 @@ public class EquipmentDAO {
         try (Connection connection = DBConnection.getConnection();
              PreparedStatement statement = connection.prepareStatement(
                      sql, Statement.RETURN_GENERATED_KEYS)) {
+
             statement.setInt(1, equipment.getCampusId());
             statement.setString(2, equipment.getSerialNumber());
             statement.setString(3, equipment.getEquipmentName());
@@ -27,7 +58,9 @@ public class EquipmentDAO {
             statement.setDouble(6, equipment.getDailyRate());
             statement.setString(7, equipment.getConditionStatus());
             statement.setString(8, equipment.getAvailabilityStatus());
+
             statement.executeUpdate();
+
             try (ResultSet keys = statement.getGeneratedKeys()) {
                 if (keys.next()) {
                     int id = keys.getInt(1);
@@ -43,9 +76,12 @@ public class EquipmentDAO {
     // Retrieve equipment by ID
     public Equipment getEquipmentById(int equipmentId) throws SQLException {
         String sql = "SELECT * FROM equipment WHERE equipment_id = ?";
+
         try (Connection connection = DBConnection.getConnection();
              PreparedStatement statement = connection.prepareStatement(sql)) {
+
             statement.setInt(1, equipmentId);
+
             try (ResultSet resultSet = statement.executeQuery()) {
                 if (resultSet.next()) {
                     return mapEquipment(resultSet);
@@ -60,13 +96,16 @@ public class EquipmentDAO {
     public List<Equipment> getAllEquipment() throws SQLException {
         List<Equipment> equipmentList = new ArrayList<>();
         String sql = "SELECT * FROM equipment";
+
         try (Connection connection = DBConnection.getConnection();
              PreparedStatement statement = connection.prepareStatement(sql);
              ResultSet resultSet = statement.executeQuery()) {
+
             while (resultSet.next()) {
                 equipmentList.add(mapEquipment(resultSet));
             }
         }
+
         return equipmentList;
     }
 
@@ -82,6 +121,7 @@ public class EquipmentDAO {
 
         try (Connection connection = DBConnection.getConnection();
              PreparedStatement statement = connection.prepareStatement(sql)) {
+
             statement.setInt(1, equipment.getCampusId());
             statement.setString(2, equipment.getSerialNumber());
             statement.setString(3, equipment.getEquipmentName());
@@ -96,19 +136,17 @@ public class EquipmentDAO {
         }
     }
 
-    // Delete equipment
-    // Delete equipment only if it has no booking history
+    // Delete equipment only when it has no booking history
     public boolean deleteEquipment(int equipmentId) throws SQLException {
-
         String sql = """
-            DELETE FROM equipment
-            WHERE equipment_id = ?
-            AND NOT EXISTS (
-                SELECT 1
-                FROM booking
-                WHERE booking.equipment_id = equipment.equipment_id
-            )
-            """;
+                DELETE FROM equipment
+                WHERE equipment_id = ?
+                AND NOT EXISTS (
+                    SELECT 1
+                    FROM booking
+                    WHERE booking.equipment_id = equipment.equipment_id
+                )
+                """;
 
         try (Connection connection = DBConnection.getConnection();
              PreparedStatement statement = connection.prepareStatement(sql)) {
@@ -117,11 +155,9 @@ public class EquipmentDAO {
             return statement.executeUpdate() > 0;
         }
     }
+
     /**
      * Retrieves equipment using an existing transaction.
-     *
-     * When forUpdate is true, MySQL locks the equipment row
-     * until the transaction is committed or rolled back.
      */
     public Equipment getEquipmentById(
             Connection connection,
@@ -135,7 +171,6 @@ public class EquipmentDAO {
         }
 
         try (PreparedStatement statement = connection.prepareStatement(sql)) {
-
             statement.setInt(1, equipmentId);
 
             try (ResultSet resultSet = statement.executeQuery()) {
@@ -148,21 +183,19 @@ public class EquipmentDAO {
         return null;
     }
 
-
-    /** Updates equipment availability using an existing transaction **/
+    // Update availability using an existing transaction
     public boolean updateAvailabilityStatus(
             Connection connection,
             int equipmentId,
             String availabilityStatus) throws SQLException {
 
         String sql = """
-            UPDATE equipment
-            SET availability_status = ?
-            WHERE equipment_id = ?
-            """;
+                UPDATE equipment
+                SET availability_status = ?
+                WHERE equipment_id = ?
+                """;
 
         try (PreparedStatement statement = connection.prepareStatement(sql)) {
-
             statement.setString(1, availabilityStatus);
             statement.setInt(2, equipmentId);
 
@@ -172,12 +205,11 @@ public class EquipmentDAO {
 
     // Check whether equipment has any booking history
     public boolean hasBookingHistory(int equipmentId) throws SQLException {
-
         String sql = """
-            SELECT COUNT(*)
-            FROM booking
-            WHERE equipment_id = ?
-            """;
+                SELECT COUNT(*)
+                FROM booking
+                WHERE equipment_id = ?
+                """;
 
         try (Connection connection = DBConnection.getConnection();
              PreparedStatement statement = connection.prepareStatement(sql)) {
@@ -185,19 +217,15 @@ public class EquipmentDAO {
             statement.setInt(1, equipmentId);
 
             try (ResultSet resultSet = statement.executeQuery()) {
-                if (resultSet.next()) {
-                    return resultSet.getInt(1) > 0;
-                }
+                return resultSet.next() && resultSet.getInt(1) > 0;
             }
         }
-
-        return false;
     }
 
     // Convert a database row into an Equipment object
     private Equipment mapEquipment(ResultSet resultSet) throws SQLException {
-
         Equipment equipment = new Equipment();
+
         equipment.setEquipmentId(resultSet.getInt("equipment_id"));
         equipment.setCampusId(resultSet.getInt("campus_id"));
         equipment.setSerialNumber(resultSet.getString("serial_number"));
@@ -206,11 +234,15 @@ public class EquipmentDAO {
         equipment.setCategory(resultSet.getString("category"));
         equipment.setDailyRate(resultSet.getDouble("daily_rate"));
         equipment.setConditionStatus(resultSet.getString("condition_status"));
-        equipment.setAvailabilityStatus(resultSet.getString("availability_status"));
+        equipment.setAvailabilityStatus(
+                resultSet.getString("availability_status"));
+
         Timestamp timestamp = resultSet.getTimestamp("created_at");
+
         if (timestamp != null) {
             equipment.setCreatedAt(timestamp.toLocalDateTime());
         }
+
         return equipment;
     }
 }

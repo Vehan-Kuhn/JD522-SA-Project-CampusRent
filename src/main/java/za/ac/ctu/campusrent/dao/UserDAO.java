@@ -1,11 +1,41 @@
+
 package za.ac.ctu.campusrent.dao;
+
 import za.ac.ctu.campusrent.model.User;
 import za.ac.ctu.campusrent.util.DBConnection;
+
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
-public class UserDAO {
+public class UserDAO implements GenericDAO<User, Integer> {
+
+    // GenericDAO implementation
+    @Override
+    public Integer insert(User user) throws SQLException {
+        return addUser(user);
+    }
+
+    @Override
+    public Optional<User> findById(Integer id) throws SQLException {
+        return Optional.ofNullable(getUserById(id));
+    }
+
+    @Override
+    public List<User> findAll() throws SQLException {
+        return getAllUsers();
+    }
+
+    @Override
+    public boolean update(User user) throws SQLException {
+        return updateUser(user);
+    }
+
+    @Override
+    public boolean delete(Integer id) throws SQLException {
+        return deleteUser(id);
+    }
 
     // Add a user.
     public int addUser(User user) throws SQLException {
@@ -143,6 +173,7 @@ public class UserDAO {
     // Convert a database row into a User object.
     private User mapUser(ResultSet resultSet) throws SQLException {
         User user = new User();
+
         user.setUserId(resultSet.getInt("user_id"));
         user.setCampusId(resultSet.getInt("campus_id"));
         user.setFirstName(resultSet.getString("first_name"));
@@ -154,6 +185,7 @@ public class UserDAO {
         user.setAccountStatus(resultSet.getString("account_status"));
 
         Timestamp timestamp = resultSet.getTimestamp("created_at");
+
         if (timestamp != null) {
             user.setCreatedAt(timestamp.toLocalDateTime());
         }

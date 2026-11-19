@@ -1,13 +1,57 @@
+
 package za.ac.ctu.campusrent.dao;
+
 import za.ac.ctu.campusrent.model.Booking;
 import za.ac.ctu.campusrent.util.DBConnection;
+
 import java.sql.*;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
-/** Handles database operations for bookings. **/
-public class BookingDAO {
+public class BookingDAO implements GenericDAO<Booking, Integer> {
+
+    // GenericDAO implementation
+    @Override
+    public Integer insert(Booking booking) throws SQLException {
+        return addBooking(booking);
+    }
+
+    @Override
+    public Optional<Booking> findById(Integer id) throws SQLException {
+        return Optional.ofNullable(getBookingById(id));
+    }
+
+    @Override
+    public List<Booking> findAll() throws SQLException {
+        return getAllBookings();
+    }
+
+    @Override
+    public boolean update(Booking booking) throws SQLException {
+        return updateBooking(booking);
+    }
+
+    /**
+     * Only cancelled bookings can be physically deleted.
+     * This protects active and approved booking records.
+     */
+    @Override
+    public boolean delete(Integer bookingId) throws SQLException {
+        String sql = """
+                DELETE FROM booking
+                WHERE booking_id = ?
+                  AND booking_status = 'CANCELLED'
+                """;
+
+        try (Connection connection = DBConnection.getConnection();
+             PreparedStatement statement = connection.prepareStatement(sql)) {
+
+            statement.setInt(1, bookingId);
+            return statement.executeUpdate() > 0;
+        }
+    }
 
     public int addBooking(Booking booking) throws SQLException {
         try (Connection connection = DBConnection.getConnection()) {
@@ -37,7 +81,8 @@ public class BookingDAO {
             if (booking.getActualReturnDate() == null) {
                 statement.setNull(5, Types.DATE);
             } else {
-                statement.setDate(5, Date.valueOf(booking.getActualReturnDate()));
+                statement.setDate(
+                        5, Date.valueOf(booking.getActualReturnDate()));
             }
 
             statement.setDouble(6, booking.getDailyRate());
@@ -71,10 +116,12 @@ public class BookingDAO {
     }
 
     public Booking getBookingById(
-            Connection connection, int bookingId, boolean forUpdate)
-            throws SQLException {
+            Connection connection,
+            int bookingId,
+            boolean forUpdate) throws SQLException {
 
         String sql = "SELECT * FROM booking WHERE booking_id = ?";
+
         if (forUpdate) {
             sql += " FOR UPDATE";
         }
@@ -100,23 +147,31 @@ public class BookingDAO {
                 bookings.add(mapBooking(resultSet));
             }
         }
+
         return bookings;
     }
 
     public List<Booking> getBookingsByUserId(int userId) throws SQLException {
         List<Booking> bookings = new ArrayList<>();
-        String sql = "SELECT * FROM booking WHERE user_id = ? ORDER BY booking_date DESC";
+
+        String sql = """
+                SELECT * FROM booking
+                WHERE user_id = ?
+                ORDER BY booking_date DESC
+                """;
 
         try (Connection connection = DBConnection.getConnection();
              PreparedStatement statement = connection.prepareStatement(sql)) {
 
             statement.setInt(1, userId);
+
             try (ResultSet resultSet = statement.executeQuery()) {
                 while (resultSet.next()) {
                     bookings.add(mapBooking(resultSet));
                 }
             }
         }
+
         return bookings;
     }
 
@@ -126,8 +181,9 @@ public class BookingDAO {
         }
     }
 
-    public boolean updateBooking(Connection connection, Booking booking)
-            throws SQLException {
+    public boolean updateBooking(
+            Connection connection,
+            Booking booking) throws SQLException {
 
         String sql = """
                 UPDATE booking
@@ -146,7 +202,8 @@ public class BookingDAO {
             if (booking.getActualReturnDate() == null) {
                 statement.setNull(5, Types.DATE);
             } else {
-                statement.setDate(5, Date.valueOf(booking.getActualReturnDate()));
+                statement.setDate(
+                        5, Date.valueOf(booking.getActualReturnDate()));
             }
 
             statement.setDouble(6, booking.getDailyRate());
@@ -165,8 +222,9 @@ public class BookingDAO {
         }
     }
 
-    public boolean cancelBooking(Connection connection, int bookingId)
-            throws SQLException {
+    public boolean cancelBooking(
+            Connection connection,
+            int bookingId) throws SQLException {
 
         String sql = """
                 UPDATE booking
@@ -182,7 +240,8 @@ public class BookingDAO {
     }
 
     /**
-     * Checks for date overlap. The caller must lock the equipment row first.
+     * Checks for date overlap.
+     * The caller must lock the equipment row first.
      */
     public boolean hasConflictingBooking(
             Connection connection,
@@ -212,22 +271,22 @@ public class BookingDAO {
             }
         }
     }
+
     // Check whether equipment has any unfinished bookings.
     public boolean hasUnfinishedBookings(
             Connection connection,
             int equipmentId) throws SQLException {
 
         String sql = """
-            SELECT COUNT(*)
-            FROM booking
-            WHERE equipment_id = ?
-              AND booking_status IN (
-                  'PENDING', 'APPROVED', 'ACTIVE', 'OVERDUE'
-              )
-            """;
+                SELECT COUNT(*)
+                FROM booking
+                WHERE equipment_id = ?
+                  AND booking_status IN (
+                      'PENDING', 'APPROVED', 'ACTIVE', 'OVERDUE'
+                  )
+                """;
 
         try (PreparedStatement statement = connection.prepareStatement(sql)) {
-
             statement.setInt(1, equipmentId);
 
             try (ResultSet resultSet = statement.executeQuery()) {
@@ -236,11 +295,10 @@ public class BookingDAO {
         }
     }
 
-    /**
-     * True when equipment is physically out with a borrower.
-     */
+    // True when equipment is physically out with a borrower.
     public boolean hasBlockingBookings(
-            Connection connection, int equipmentId) throws SQLException {
+            Connection connection,
+            int equipmentId) throws SQLException {
 
         String sql = """
                 SELECT COUNT(*)
@@ -251,17 +309,14 @@ public class BookingDAO {
 
         try (PreparedStatement statement = connection.prepareStatement(sql)) {
             statement.setInt(1, equipmentId);
+
             try (ResultSet resultSet = statement.executeQuery()) {
                 return resultSet.next() && resultSet.getInt(1) > 0;
             }
         }
     }
 
-    /**
-     * True when any booking still needs to be fulfilled or closed.
-     * Used to prevent maintenance/retirement from conflicting with reservations.
-     */
-
+    // Convert a database row into a Booking object.
     private Booking mapBooking(ResultSet resultSet) throws SQLException {
         Booking booking = new Booking();
 
@@ -269,30 +324,40 @@ public class BookingDAO {
         booking.setUserId(resultSet.getInt("user_id"));
         booking.setEquipmentId(resultSet.getInt("equipment_id"));
 
-        Timestamp bookingTimestamp = resultSet.getTimestamp("booking_date");
+        Timestamp bookingTimestamp =
+                resultSet.getTimestamp("booking_date");
+
         if (bookingTimestamp != null) {
-            booking.setBookingDate(bookingTimestamp.toLocalDateTime());
+            booking.setBookingDate(
+                    bookingTimestamp.toLocalDateTime());
         }
 
         Date startDate = resultSet.getDate("start_date");
+
         if (startDate != null) {
             booking.setStartDate(startDate.toLocalDate());
         }
 
         Date dueDate = resultSet.getDate("due_date");
+
         if (dueDate != null) {
             booking.setDueDate(dueDate.toLocalDate());
         }
 
         Date returnDate = resultSet.getDate("actual_return_date");
+
         if (returnDate != null) {
             booking.setActualReturnDate(returnDate.toLocalDate());
         }
 
         booking.setDailyRate(resultSet.getDouble("daily_rate"));
+
         double totalCost = resultSet.getDouble("total_cost");
         booking.setTotalCost(resultSet.wasNull() ? 0.0 : totalCost);
-        booking.setBookingStatus(resultSet.getString("booking_status"));
+
+        booking.setBookingStatus(
+                resultSet.getString("booking_status"));
+
         booking.setNotes(resultSet.getString("notes"));
 
         return booking;

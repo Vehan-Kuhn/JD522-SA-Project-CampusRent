@@ -1,12 +1,18 @@
 package za.ac.ctu.campusrent.gui;
+
+import za.ac.ctu.campusrent.model.User;
+
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import java.awt.*;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.Locale;
 
- /** Main application window for CampusRent. **/
-
+/**
+ * Main application window for CampusRent.
+ * Navigation is controlled by the logged-in user's role.
+ */
 public class MainFrame extends JFrame {
 
     private final Color SIDEBAR_COLOR = new Color(25, 35, 55);
@@ -16,11 +22,24 @@ public class MainFrame extends JFrame {
 
     private final CardLayout cardLayout;
     private final JPanel contentPanel;
+    private final User loggedInUser;
+    private final String userRole;
 
     private JLabel dateTimeLabel;
     private JLabel userLabel;
+    private Timer clockTimer;
+    public MainFrame(User loggedInUser) {
 
-    public MainFrame() {
+        if (loggedInUser == null) {
+            throw new IllegalArgumentException(
+                    "A logged-in user is required."
+            );
+        }
+        this.loggedInUser = loggedInUser;
+        this.userRole = loggedInUser.getUserRole()
+                .trim()
+                .toUpperCase(Locale.ROOT);
+
 
         setTitle("CampusRent | Equipment Rental System");
         setSize(1250, 780);
@@ -34,31 +53,29 @@ public class MainFrame extends JFrame {
 
         setLayout(new BorderLayout());
 
-        // Build application components
         add(createSidebar(), BorderLayout.WEST);
         add(createMainContent(), BorderLayout.CENTER);
         add(createStatusBar(), BorderLayout.SOUTH);
 
-        // Start on dashboard
         cardLayout.show(contentPanel, "DASHBOARD");
+        clockTimer = new Timer(1000, e -> updateDateTime());
+        ThemeManager.loadSavedTheme();
+        clockTimer.start();
+        SwingUtilities.invokeLater(() -> ThemeManager.apply(this));
 
-        // Update date and time every second
-        Timer timer = new Timer(1000, e -> updateDateTime());
-        timer.start();
+
     }
 
     private JPanel createSidebar() {
 
-        JPanel sidebar = new JPanel();
+        JPanel sidebar = new JPanel(new BorderLayout());
         sidebar.setPreferredSize(new Dimension(235, 0));
         sidebar.setBackground(SIDEBAR_COLOR);
-        sidebar.setLayout(new BorderLayout());
 
         // Branding
-        JPanel branding = new JPanel();
+        JPanel branding = new JPanel(new BorderLayout());
         branding.setBackground(SIDEBAR_COLOR);
         branding.setBorder(new EmptyBorder(25, 18, 25, 10));
-        branding.setLayout(new BorderLayout());
 
         JLabel logo = new JLabel("CR");
         logo.setForeground(Color.WHITE);
@@ -77,31 +94,79 @@ public class MainFrame extends JFrame {
         navigation.setLayout(new GridLayout(0, 1, 0, 8));
         navigation.setBorder(new EmptyBorder(15, 12, 15, 12));
 
-        navigation.add(createNavButton("Dashboard", "DASHBOARD"));
-        navigation.add(createNavButton("Equipment Catalogue", "EQUIPMENT"));
-        navigation.add(createNavButton("Bookings", "BOOKINGS"));
-        navigation.add(createNavButton("Returns", "RETURNS"));
-        navigation.add(createNavButton("Users", "USERS"));
-        navigation.add(createNavButton("Reports", "REPORTS"));
-        navigation.add(createNavButton("Settings", "SETTINGS"));
+        addNavigationIfAllowed(navigation, "Dashboard", "DASHBOARD");
+        addNavigationIfAllowed(navigation, "Equipment Catalogue", "EQUIPMENT");
+        addNavigationIfAllowed(navigation, "Bookings", "BOOKINGS");
+        addNavigationIfAllowed(navigation, "Returns", "RETURNS");
+        addNavigationIfAllowed(navigation, "Users", "USERS");
+        addNavigationIfAllowed(navigation, "Reports", "REPORTS");
+        addNavigationIfAllowed(navigation, "Settings", "SETTINGS");
 
-        // User section
-        JPanel userPanel = new JPanel(new BorderLayout());
+        // Logged-in user section
+        JPanel userPanel = new JPanel(new BorderLayout(0, 12));
         userPanel.setBackground(new Color(32, 45, 68));
         userPanel.setBorder(new EmptyBorder(18, 15, 18, 15));
+
+        JPanel userDetails = new JPanel(new BorderLayout(10, 0));
+        userDetails.setBackground(new Color(32, 45, 68));
+
         JLabel userIcon = new JLabel("●");
         userIcon.setForeground(new Color(46, 204, 113));
         userIcon.setFont(new Font("Arial", Font.BOLD, 18));
-        JLabel userName = new JLabel("Administrator");
+
+        String fullName = loggedInUser.getFirstName()
+                + " " + loggedInUser.getLastName();
+
+        JLabel userName = new JLabel(
+                "<html>" + fullName + "<br><small>"
+                        + userRole + "</small></html>"
+        );
         userName.setForeground(Color.WHITE);
         userName.setFont(new Font("Arial", Font.BOLD, 13));
-        userPanel.add(userIcon, BorderLayout.WEST);
-        userPanel.add(userName, BorderLayout.CENTER);
+
+        userDetails.add(userIcon, BorderLayout.WEST);
+        userDetails.add(userName, BorderLayout.CENTER);
+
+        // Log Out button
+        JButton logoutButton = new JButton("Log Out");
+        logoutButton.setFont(new Font("Arial", Font.BOLD, 13));
+        logoutButton.setForeground(Color.WHITE);
+        logoutButton.setBackground(new Color(192, 57, 43));
+        logoutButton.setFocusPainted(false);
+        logoutButton.setBorderPainted(false);
+        logoutButton.setOpaque(true);
+        logoutButton.setCursor(new Cursor(Cursor.HAND_CURSOR));
+        logoutButton.setBorder(new EmptyBorder(10, 15, 10, 15));
+        logoutButton.addActionListener(e -> logout());
+
+        logoutButton.addMouseListener(new java.awt.event.MouseAdapter() {
+            @Override
+            public void mouseEntered(java.awt.event.MouseEvent e) {
+                logoutButton.setBackground(new Color(231, 76, 60));
+            }
+
+            @Override
+            public void mouseExited(java.awt.event.MouseEvent e) {
+                logoutButton.setBackground(new Color(192, 57, 43));
+            }
+        });
+
+        userPanel.add(userDetails, BorderLayout.CENTER);
+        userPanel.add(logoutButton, BorderLayout.SOUTH);
+
         sidebar.add(branding, BorderLayout.NORTH);
         sidebar.add(navigation, BorderLayout.CENTER);
         sidebar.add(userPanel, BorderLayout.SOUTH);
 
         return sidebar;
+    }
+
+    private void addNavigationIfAllowed(
+            JPanel navigation, String text, String screen) {
+
+        if (hasAccess(screen)) {
+            navigation.add(createNavButton(text, screen));
+        }
     }
 
     private JButton createNavButton(String text, String screen) {
@@ -110,7 +175,6 @@ public class MainFrame extends JFrame {
         button.setFont(new Font("Arial", Font.PLAIN, 14));
         button.setForeground(Color.WHITE);
         button.setBackground(SIDEBAR_COLOR);
-
         button.setHorizontalAlignment(SwingConstants.LEFT);
         button.setFocusPainted(false);
         button.setBorderPainted(false);
@@ -118,7 +182,9 @@ public class MainFrame extends JFrame {
         button.setBorder(new EmptyBorder(13, 15, 13, 10));
         button.setCursor(new Cursor(Cursor.HAND_CURSOR));
 
-        button.addActionListener(e -> showScreen(screen)); button.addMouseListener(new java.awt.event.MouseAdapter() {
+        button.addActionListener(e -> showScreen(screen));
+
+        button.addMouseListener(new java.awt.event.MouseAdapter() {
 
             @Override
             public void mouseEntered(java.awt.event.MouseEvent e) {
@@ -134,26 +200,80 @@ public class MainFrame extends JFrame {
         return button;
     }
 
+    /**
+     * Checks whether the logged-in user's role can access a screen.
+     */
+    private boolean hasAccess(String screen) {
+
+        switch (userRole) {
+
+            case "STUDENT":
+                return screen.equals("DASHBOARD")
+                        || screen.equals("EQUIPMENT")
+                        || screen.equals("BOOKINGS");
+
+            case "STAFF":
+                return screen.equals("DASHBOARD")
+                        || screen.equals("EQUIPMENT")
+                        || screen.equals("BOOKINGS")
+                        || screen.equals("RETURNS")
+                        || screen.equals("REPORTS");
+
+            case "ADMIN":
+                return screen.equals("DASHBOARD")
+                        || screen.equals("EQUIPMENT")
+                        || screen.equals("BOOKINGS")
+                        || screen.equals("RETURNS")
+                        || screen.equals("USERS")
+                        || screen.equals("REPORTS")
+                        || screen.equals("SETTINGS");
+
+            default:
+                // Unknown roles receive no screen permissions.
+                return false;
+        }
+    }
+
+
     private JPanel createMainContent() {
 
         JPanel main = new JPanel(new BorderLayout());
         main.setBackground(BACKGROUND_COLOR);
 
+        // Add the application header.
         main.add(createHeader(), BorderLayout.NORTH);
 
-        // Add application screens
+        // Dashboard is available to all authenticated roles.
         contentPanel.add(new DashboardPanel(), "DASHBOARD");
-        contentPanel.add(new EquipmentPanel(), "EQUIPMENT");
-        contentPanel.add(new BookingPanel(), "BOOKINGS");
-        contentPanel.add(new PlaceholderPanel("Returns Management"), "RETURNS");
-        contentPanel.add(new PlaceholderPanel("User Management"), "USERS");
-        contentPanel.add(new ReportsPanel(), "REPORTS");
-        contentPanel.add(new PlaceholderPanel("Application Settings"), "SETTINGS");
 
+        // Equipment and bookings are available to all roles.
+        contentPanel.add(new EquipmentPanel(loggedInUser), "EQUIPMENT");
+
+        contentPanel.add(new BookingPanel(loggedInUser), "BOOKINGS");
+
+        // Only create screens the logged-in user can access.
+        if (hasAccess("RETURNS")) {
+            contentPanel.add(new ReturnsPanel(loggedInUser), "RETURNS");
+        }
+
+        if (hasAccess("USERS")) {
+            contentPanel.add(new UserManagementPanel(loggedInUser), "USERS");
+        }
+
+        if (hasAccess("REPORTS")) {
+            contentPanel.add(new ReportsPanel(), "REPORTS");
+        }
+
+        if (hasAccess("SETTINGS")) {
+            contentPanel.add(new SettingsPanel(), "SETTINGS");
+        }
+
+        // IMPORTANT: Attach the CardLayout panel to the main window.
         main.add(contentPanel, BorderLayout.CENTER);
 
         return main;
     }
+
 
     private JPanel createHeader() {
 
@@ -164,7 +284,13 @@ public class MainFrame extends JFrame {
         JLabel heading = new JLabel("CampusRent Management");
         heading.setFont(new Font("Arial", Font.BOLD, 21));
         heading.setForeground(TEXT_COLOR);
-        userLabel = new JLabel("Welcome, Administrator");
+
+        String fullName = loggedInUser.getFirstName()
+                + " " + loggedInUser.getLastName();
+
+        userLabel = new JLabel(
+                "Welcome, " + fullName + " (" + userRole + ")"
+        );
         userLabel.setFont(new Font("Arial", Font.PLAIN, 13));
         userLabel.setForeground(Color.GRAY);
 
@@ -188,6 +314,7 @@ public class MainFrame extends JFrame {
         statusBar.add(dateTimeLabel, BorderLayout.EAST);
 
         updateDateTime();
+
         return statusBar;
     }
 
@@ -196,7 +323,9 @@ public class MainFrame extends JFrame {
         if (dateTimeLabel != null) {
 
             String currentTime = LocalDateTime.now().format(
-                    DateTimeFormatter.ofPattern("dd MMM yyyy | HH:mm:ss")
+                    DateTimeFormatter.ofPattern(
+                            "dd MMM yyyy | HH:mm:ss"
+                    )
             );
 
             dateTimeLabel.setText(currentTime);
@@ -204,7 +333,47 @@ public class MainFrame extends JFrame {
     }
 
     private void showScreen(String screen) {
+
+        // Check access again before opening a screen.
+        if (!hasAccess(screen)) {
+
+            JOptionPane.showMessageDialog(
+                    this,
+                    "You do not have permission to access this section.",
+                    "Access Denied",
+                    JOptionPane.WARNING_MESSAGE
+            );
+
+            return;
+        }
+
         cardLayout.show(contentPanel, screen);
     }
-}
 
+    /**
+     * Confirms logout, stops the clock timer, and returns to the login screen.
+     */
+    private void logout() {
+
+        int choice = JOptionPane.showConfirmDialog(
+                this,
+                "Are you sure you want to log out?",
+                "Confirm Logout",
+                JOptionPane.YES_NO_OPTION,
+                JOptionPane.QUESTION_MESSAGE
+        );
+
+        if (choice == JOptionPane.YES_OPTION) {
+
+            if (clockTimer != null) {
+                clockTimer.stop();
+            }
+
+            dispose();
+
+            LoginFrame loginFrame = new LoginFrame();
+            loginFrame.setLocationRelativeTo(null);
+            loginFrame.setVisible(true);
+        }
+    }
+}
