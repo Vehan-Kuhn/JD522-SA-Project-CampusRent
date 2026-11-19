@@ -1,0 +1,10 @@
+equipment_id,campus_id,serial_number,equipment_name,description,category,daily_rate,condition_status,availability_status
+"1","1","TEST-dbe50773","Test Laptop","CampusRent automated test equipment Test to see if you can edit equipment","LAPTOP","176.0","GOOD","AVAILABLE"
+"2","1","TEST-b52e36bf","Test Laptop","CampusRent automated test equipment","LAPTOP","175.0","GOOD","AVAILABLE"
+"3","1","TEST-a735fb6b","Test Laptop","CampusRent automated test equipment","LAPTOP","175.0","GOOD","AVAILABLE"
+"4","1","TEST-132afa22","Test Laptop","CampusRent automated test equipment","LAPTOP","175.0","GOOD","AVAILABLE"
+"5","1","TEST-1551f081","Test Laptop","CampusRent automated test equipment","LAPTOP","175.0","GOOD","AVAILABLE"
+"6","1","TEST-3498179e","Test Laptop","CampusRent automated test equipment","LAPTOP","175.0","GOOD","AVAILABLE"
+"7","1","TEST-e787169c","Test Laptop","CampusRent automated test equipment","LAPTOP","175.0","GOOD","AVAILABLE"
+"8","1","TEST-e550c1d8","Test Laptop","CampusRent automated test equipment","LAPTOP","175.0","GOOD","BOOKED"
+"10","1","TEST-5747e044","Test Laptop","CampusRent automated test equipment","LAPTOP","175.0","GOOD","AVAILABLE"
