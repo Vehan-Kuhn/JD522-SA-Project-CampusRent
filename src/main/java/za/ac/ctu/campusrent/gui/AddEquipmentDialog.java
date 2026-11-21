@@ -1,8 +1,11 @@
+
 package za.ac.ctu.campusrent.gui;
+
 import za.ac.ctu.campusrent.model.Campus;
 import za.ac.ctu.campusrent.model.Equipment;
 import za.ac.ctu.campusrent.service.CampusService;
 import za.ac.ctu.campusrent.service.EquipmentService;
+
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import java.awt.*;
@@ -26,7 +29,12 @@ public class AddEquipmentDialog extends JDialog {
     private JButton saveButton;
 
     public AddEquipmentDialog(Window owner, Runnable onSaved) {
-        super(owner, "Add Equipment", ModalityType.APPLICATION_MODAL);
+
+        super(
+                owner,
+                LanguageManager.text("equipment.addTitle"),
+                ModalityType.APPLICATION_MODAL
+        );
 
         this.onSaved = onSaved;
         this.campusService = new CampusService();
@@ -43,14 +51,28 @@ public class AddEquipmentDialog extends JDialog {
         setLocationRelativeTo(getOwner());
         setResizable(false);
 
-        JPanel mainPanel = new JPanel(new BorderLayout(10, 15));
-        mainPanel.setBorder(new EmptyBorder(20, 25, 20, 25));
+        JPanel mainPanel = new JPanel(
+                new BorderLayout(10, 15)
+        );
+
+        mainPanel.setBorder(
+                new EmptyBorder(20, 25, 20, 25)
+        );
+
         mainPanel.setBackground(Color.WHITE);
 
-        JLabel heading = new JLabel("Register New Equipment");
-        heading.setFont(new Font("Arial", Font.BOLD, 22));
+        JLabel heading = new JLabel(
+                LanguageManager.text("equipment.addHeading")
+        );
 
-        JPanel formPanel = new JPanel(new GridBagLayout());
+        heading.setFont(
+                new Font("Arial", Font.BOLD, 22)
+        );
+
+        JPanel formPanel = new JPanel(
+                new GridBagLayout()
+        );
+
         formPanel.setOpaque(false);
 
         GridBagConstraints gbc = new GridBagConstraints();
@@ -66,39 +88,99 @@ public class AddEquipmentDialog extends JDialog {
         descriptionArea.setWrapStyleWord(true);
 
         categoryCombo = new JComboBox<>(new String[]{
-                "LAPTOP", "PROJECTOR", "CAMERA",
-                "TABLET", "NETWORK_KIT", "OTHER"
+                "LAPTOP",
+                "PROJECTOR",
+                "CAMERA",
+                "TABLET",
+                "NETWORK_KIT",
+                "OTHER"
         });
 
         dailyRateField = new JTextField(20);
 
         conditionCombo = new JComboBox<>(new String[]{
-                "NEW", "GOOD", "FAIR", "DAMAGED"
+                "NEW",
+                "GOOD",
+                "FAIR",
+                "DAMAGED"
         });
 
         availabilityCombo = new JComboBox<>(new String[]{
-                "AVAILABLE", "MAINTENANCE", "RETIRED"
+                "AVAILABLE",
+                "MAINTENANCE",
+                "RETIRED"
         });
 
         int row = 0;
 
-        addFormRow(formPanel, gbc, row++, "Campus:", campusCombo);
-        addFormRow(formPanel, gbc, row++, "Serial Number:", serialNumberField);
-        addFormRow(formPanel, gbc, row++, "Equipment Name:", equipmentNameField);
-        addFormRow(formPanel, gbc, row++, "Description:",
-                new JScrollPane(descriptionArea));
-        addFormRow(formPanel, gbc, row++, "Category:", categoryCombo);
-        addFormRow(formPanel, gbc, row++, "Daily Rate (R):", dailyRateField);
-        addFormRow(formPanel, gbc, row++, "Condition:", conditionCombo);
-        addFormRow(formPanel, gbc, row++, "Availability:", availabilityCombo);
+        addFormRow(
+                formPanel, gbc, row++,
+                LanguageManager.text("equipment.formCampus"),
+                campusCombo
+        );
 
-        saveButton = new JButton("Save Equipment");
-        JButton cancelButton = new JButton("Cancel");
+        addFormRow(
+                formPanel, gbc, row++,
+                LanguageManager.text("equipment.formSerial"),
+                serialNumberField
+        );
 
-        saveButton.addActionListener(e -> saveEquipment());
-        cancelButton.addActionListener(e -> dispose());
+        addFormRow(
+                formPanel, gbc, row++,
+                LanguageManager.text("equipment.formName"),
+                equipmentNameField
+        );
 
-        JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
+        addFormRow(
+                formPanel, gbc, row++,
+                LanguageManager.text("equipment.formDescription"),
+                new JScrollPane(descriptionArea)
+        );
+
+        addFormRow(
+                formPanel, gbc, row++,
+                LanguageManager.text("equipment.formCategory"),
+                categoryCombo
+        );
+
+        addFormRow(
+                formPanel, gbc, row++,
+                LanguageManager.text("equipment.formRate"),
+                dailyRateField
+        );
+
+        addFormRow(
+                formPanel, gbc, row++,
+                LanguageManager.text("equipment.formCondition"),
+                conditionCombo
+        );
+
+        addFormRow(
+                formPanel, gbc, row++,
+                LanguageManager.text("equipment.formAvailability"),
+                availabilityCombo
+        );
+
+        saveButton = new JButton(
+                LanguageManager.text("equipment.save")
+        );
+
+        JButton cancelButton = new JButton(
+                LanguageManager.text("common.cancel")
+        );
+
+        saveButton.addActionListener(
+                e -> saveEquipment()
+        );
+
+        cancelButton.addActionListener(
+                e -> dispose()
+        );
+
+        JPanel buttonPanel = new JPanel(
+                new FlowLayout(FlowLayout.RIGHT)
+        );
+
         buttonPanel.setOpaque(false);
         buttonPanel.add(cancelButton);
         buttonPanel.add(saveButton);
@@ -121,10 +203,12 @@ public class AddEquipmentDialog extends JDialog {
 
         gbc.gridx = 0;
         gbc.weightx = 0.35;
+
         panel.add(new JLabel(label), gbc);
 
         gbc.gridx = 1;
         gbc.weightx = 0.65;
+
         panel.add(input, gbc);
     }
 
@@ -133,50 +217,65 @@ public class AddEquipmentDialog extends JDialog {
         campusCombo.setEnabled(false);
         saveButton.setEnabled(false);
 
-        SwingWorker<List<Campus>, Void> worker = new SwingWorker<>() {
+        SwingWorker<List<Campus>, Void> worker =
+                new SwingWorker<>() {
 
-            @Override
-            protected List<Campus> doInBackground() throws SQLException {
-                return campusService.getAllCampuses();
-            }
+                    @Override
+                    protected List<Campus> doInBackground()
+                            throws SQLException {
 
-            @Override
-            protected void done() {
-
-                try {
-                    List<Campus> campuses = get();
-
-                    campusCombo.removeAllItems();
-
-                    for (Campus campus : campuses) {
-                        campusCombo.addItem(campus);
+                        return campusService.getAllCampuses();
                     }
 
-                    campusCombo.setEnabled(!campuses.isEmpty());
-                    saveButton.setEnabled(!campuses.isEmpty());
+                    @Override
+                    protected void done() {
 
-                    if (campuses.isEmpty()) {
-                        JOptionPane.showMessageDialog(
-                                AddEquipmentDialog.this,
-                                "No campuses were found. Add a campus before registering equipment.",
-                                "No Campuses Available",
-                                JOptionPane.WARNING_MESSAGE
-                        );
+                        try {
+
+                            List<Campus> campuses = get();
+
+                            campusCombo.removeAllItems();
+
+                            for (Campus campus : campuses) {
+                                campusCombo.addItem(campus);
+                            }
+
+                            campusCombo.setEnabled(!campuses.isEmpty());
+                            saveButton.setEnabled(!campuses.isEmpty());
+
+                            if (campuses.isEmpty()) {
+
+                                JOptionPane.showMessageDialog(
+                                        AddEquipmentDialog.this,
+                                        LanguageManager.text(
+                                                "equipment.noCampuses"
+                                        ),
+                                        LanguageManager.text(
+                                                "equipment.noCampusesTitle"
+                                        ),
+                                        JOptionPane.WARNING_MESSAGE
+                                );
+                            }
+
+                        } catch (Exception ex) {
+
+                            JOptionPane.showMessageDialog(
+                                    AddEquipmentDialog.this,
+                                    LanguageManager.text(
+                                            "equipment.loadCampusesError"
+                                    )
+                                            + "\n"
+                                            + getErrorMessage(ex),
+                                    LanguageManager.text(
+                                            "equipment.databaseErrorTitle"
+                                    ),
+                                    JOptionPane.ERROR_MESSAGE
+                            );
+
+                            dispose();
+                        }
                     }
-
-                } catch (Exception ex) {
-                    JOptionPane.showMessageDialog(
-                            AddEquipmentDialog.this,
-                            "Could not load campuses from the database.\n"
-                                    + getErrorMessage(ex),
-                            "Database Error",
-                            JOptionPane.ERROR_MESSAGE
-                    );
-
-                    dispose();
-                }
-            }
-        };
+                };
 
         worker.execute();
     }
@@ -186,104 +285,171 @@ public class AddEquipmentDialog extends JDialog {
         Campus selectedCampus =
                 (Campus) campusCombo.getSelectedItem();
 
-        String serialNumber = serialNumberField.getText().trim();
-        String equipmentName = equipmentNameField.getText().trim();
-        String description = descriptionArea.getText().trim();
-        String dailyRateText = dailyRateField.getText().trim();
+        String serialNumber =
+                serialNumberField.getText().trim();
+
+        String equipmentName =
+                equipmentNameField.getText().trim();
+
+        String description =
+                descriptionArea.getText().trim();
+
+        String dailyRateText =
+                dailyRateField.getText().trim();
 
         if (selectedCampus == null) {
-            showValidationError("Please select a campus.");
+
+            showValidationError(
+                    LanguageManager.text("equipment.validationCampus")
+            );
+
             return;
         }
 
         if (serialNumber.isEmpty()) {
-            showValidationError("Please enter the serial number.");
+
+            showValidationError(
+                    LanguageManager.text("equipment.validationSerial")
+            );
+
             return;
         }
 
         if (equipmentName.isEmpty()) {
-            showValidationError("Please enter the equipment name.");
+
+            showValidationError(
+                    LanguageManager.text("equipment.validationName")
+            );
+
             return;
         }
 
         if (dailyRateText.isEmpty()) {
-            showValidationError("Please enter the daily rental rate.");
+
+            showValidationError(
+                    LanguageManager.text("equipment.validationRate")
+            );
+
             return;
         }
 
         final double dailyRate;
 
         try {
+
             dailyRate = Double.parseDouble(dailyRateText);
 
             if (!Double.isFinite(dailyRate) || dailyRate < 0) {
+
                 showValidationError(
-                        "The daily rate must be a valid number greater than or equal to zero."
+                        LanguageManager.text(
+                                "equipment.validationRatePositive"
+                        )
                 );
+
                 return;
             }
 
         } catch (NumberFormatException ex) {
+
             showValidationError(
-                    "Please enter a valid daily rate, for example: 150.00"
+                    LanguageManager.text(
+                            "equipment.validationRateFormat"
+                    )
             );
+
             return;
         }
 
         Equipment equipment = new Equipment();
 
-        equipment.setCampusId(selectedCampus.getCampusId());
+        equipment.setCampusId(
+                selectedCampus.getCampusId()
+        );
+
         equipment.setSerialNumber(serialNumber);
         equipment.setEquipmentName(equipmentName);
         equipment.setDescription(description);
-        equipment.setCategory((String) categoryCombo.getSelectedItem());
+
+        equipment.setCategory(
+                (String) categoryCombo.getSelectedItem()
+        );
+
         equipment.setDailyRate(dailyRate);
-        equipment.setConditionStatus((String) conditionCombo.getSelectedItem());
-        equipment.setAvailabilityStatus((String) availabilityCombo.getSelectedItem());
+
+        equipment.setConditionStatus(
+                (String) conditionCombo.getSelectedItem()
+        );
+
+        equipment.setAvailabilityStatus(
+                (String) availabilityCombo.getSelectedItem()
+        );
 
         saveButton.setEnabled(false);
-        saveButton.setText("Saving...");
 
-        SwingWorker<Integer, Void> worker = new SwingWorker<>() {
+        saveButton.setText(
+                LanguageManager.text("equipment.saving")
+        );
 
-            @Override
-            protected Integer doInBackground() throws SQLException {
-                return equipmentService.addEquipment(equipment);
-            }
+        SwingWorker<Integer, Void> worker =
+                new SwingWorker<>() {
 
-            @Override
-            protected void done() {
+                    @Override
+                    protected Integer doInBackground()
+                            throws SQLException {
 
-                saveButton.setEnabled(true);
-                saveButton.setText("Save Equipment");
-
-                try {
-                    int equipmentId = get();
-
-                    JOptionPane.showMessageDialog(
-                            AddEquipmentDialog.this,
-                            "Equipment registered successfully.\n"
-                                    + "Equipment ID: " + equipmentId,
-                            "Equipment Saved",
-                            JOptionPane.INFORMATION_MESSAGE
-                    );
-
-                    if (onSaved != null) {
-                        onSaved.run();
+                        return equipmentService.addEquipment(equipment);
                     }
 
-                    dispose();
+                    @Override
+                    protected void done() {
 
-                } catch (Exception ex) {
-                    JOptionPane.showMessageDialog(
-                            AddEquipmentDialog.this,
-                            getErrorMessage(ex),
-                            "Unable to Save Equipment",
-                            JOptionPane.ERROR_MESSAGE
-                    );
-                }
-            }
-        };
+                        saveButton.setEnabled(true);
+
+                        saveButton.setText(
+                                LanguageManager.text("equipment.save")
+                        );
+
+                        try {
+
+                            int equipmentId = get();
+
+                            JOptionPane.showMessageDialog(
+                                    AddEquipmentDialog.this,
+                                    LanguageManager.text(
+                                            "equipment.registered"
+                                    )
+                                            + "\n"
+                                            + LanguageManager.text(
+                                            "equipment.equipmentId"
+                                    )
+                                            + ": "
+                                            + equipmentId,
+                                    LanguageManager.text(
+                                            "equipment.savedTitle"
+                                    ),
+                                    JOptionPane.INFORMATION_MESSAGE
+                            );
+
+                            if (onSaved != null) {
+                                onSaved.run();
+                            }
+
+                            dispose();
+
+                        } catch (Exception ex) {
+
+                            JOptionPane.showMessageDialog(
+                                    AddEquipmentDialog.this,
+                                    getErrorMessage(ex),
+                                    LanguageManager.text(
+                                            "equipment.saveErrorTitle"
+                                    ),
+                                    JOptionPane.ERROR_MESSAGE
+                            );
+                        }
+                    }
+                };
 
         worker.execute();
     }
@@ -293,18 +459,23 @@ public class AddEquipmentDialog extends JDialog {
         JOptionPane.showMessageDialog(
                 this,
                 message,
-                "Validation Error",
+                LanguageManager.text(
+                        "equipment.validationTitle"
+                ),
                 JOptionPane.WARNING_MESSAGE
         );
     }
 
     private String getErrorMessage(Exception ex) {
 
-        Throwable cause = ex.getCause();
+        Throwable cause = ex;
 
         while (cause != null) {
-            if (cause instanceof IllegalArgumentException
-                    || cause instanceof SQLException) {
+
+            if (cause.getMessage() != null
+                    && (cause instanceof IllegalArgumentException
+                    || cause instanceof SQLException)) {
+
                 return cause.getMessage();
             }
 
@@ -313,7 +484,6 @@ public class AddEquipmentDialog extends JDialog {
 
         return ex.getMessage() != null
                 ? ex.getMessage()
-                : "An unexpected error occurred.";
+                : LanguageManager.text("common.unknownError");
     }
 }
-

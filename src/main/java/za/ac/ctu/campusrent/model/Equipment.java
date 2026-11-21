@@ -2,7 +2,7 @@ package za.ac.ctu.campusrent.model;
 import java.time.LocalDateTime;
 
 /** Represents Equipment in the CampusRent app **/
-public class Equipment {
+public class Equipment implements Rentable, Comparable<Equipment> {
     private int equipmentId;
     private int campusId;
     private String serialNumber;
@@ -92,6 +92,66 @@ public class Equipment {
     }
     public void setCreatedAt(LocalDateTime createdAt) {
         this.createdAt = createdAt;
+    }
+    public EquipmentCategory getCategoryEnum() {
+        try {
+            return EquipmentCategory.valueOf(
+                    category.trim().toUpperCase(java.util.Locale.ROOT));
+        } catch (RuntimeException ex) {
+            return EquipmentCategory.OTHER;
+        }
+    }
+
+    @Override
+    public boolean isAvailableForRental() {
+        return "AVAILABLE".equalsIgnoreCase(availabilityStatus);
+    }
+
+    @Override
+    public int compareTo(Equipment other) {
+        if (other == null) {
+            return 1;
+        }
+
+        int byName = java.util.Comparator.nullsLast(
+                        String.CASE_INSENSITIVE_ORDER)
+                .compare(equipmentName, other.equipmentName);
+
+        if (byName != 0) {
+            return byName;
+        }
+
+        return java.util.Comparator.nullsLast(
+                        String.CASE_INSENSITIVE_ORDER)
+                .compare(serialNumber, other.serialNumber);
+    }
+
+    @Override
+    public boolean equals(Object object) {
+        if (this == object) {
+            return true;
+        }
+
+        if (!(object instanceof Equipment other)) {
+            return false;
+        }
+
+        if (equipmentId > 0 && other.equipmentId > 0) {
+            return equipmentId == other.equipmentId;
+        }
+
+        return serialNumber != null
+                && other.serialNumber != null
+                && serialNumber.equalsIgnoreCase(other.serialNumber);
+    }
+
+    @Override
+    public int hashCode() {
+        return equipmentId > 0
+                ? Integer.hashCode(equipmentId)
+                : (serialNumber == null ? 0
+                : serialNumber.toUpperCase(
+                java.util.Locale.ROOT).hashCode());
     }
 
     //Displays Equipment Information

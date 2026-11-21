@@ -1,3 +1,4 @@
+
 package za.ac.ctu.campusrent.gui;
 
 import za.ac.ctu.campusrent.model.User;
@@ -26,8 +27,8 @@ public class MainFrame extends JFrame {
     private final String userRole;
 
     private JLabel dateTimeLabel;
-    private JLabel userLabel;
     private Timer clockTimer;
+
     public MainFrame(User loggedInUser) {
 
         if (loggedInUser == null) {
@@ -35,13 +36,18 @@ public class MainFrame extends JFrame {
                     "A logged-in user is required."
             );
         }
+
         this.loggedInUser = loggedInUser;
+
         this.userRole = loggedInUser.getUserRole()
                 .trim()
                 .toUpperCase(Locale.ROOT);
 
+        // Load saved preferences BEFORE creating the interface.
+        LanguageManager.loadSavedLanguage();
+        ThemeManager.loadSavedTheme();
 
-        setTitle("CampusRent | Equipment Rental System");
+        setTitle(LanguageManager.text("app.title"));
         setSize(1250, 780);
         setMinimumSize(new Dimension(1000, 650));
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
@@ -58,12 +64,11 @@ public class MainFrame extends JFrame {
         add(createStatusBar(), BorderLayout.SOUTH);
 
         cardLayout.show(contentPanel, "DASHBOARD");
+
         clockTimer = new Timer(1000, e -> updateDateTime());
-        ThemeManager.loadSavedTheme();
         clockTimer.start();
+
         SwingUtilities.invokeLater(() -> ThemeManager.apply(this));
-
-
     }
 
     private JPanel createSidebar() {
@@ -94,13 +99,33 @@ public class MainFrame extends JFrame {
         navigation.setLayout(new GridLayout(0, 1, 0, 8));
         navigation.setBorder(new EmptyBorder(15, 12, 15, 12));
 
-        addNavigationIfAllowed(navigation, "Dashboard", "DASHBOARD");
-        addNavigationIfAllowed(navigation, "Equipment Catalogue", "EQUIPMENT");
-        addNavigationIfAllowed(navigation, "Bookings", "BOOKINGS");
-        addNavigationIfAllowed(navigation, "Returns", "RETURNS");
-        addNavigationIfAllowed(navigation, "Users", "USERS");
-        addNavigationIfAllowed(navigation, "Reports", "REPORTS");
-        addNavigationIfAllowed(navigation, "Settings", "SETTINGS");
+        addNavigationIfAllowed(
+                navigation, LanguageManager.text("nav.dashboard"), "DASHBOARD"
+        );
+
+        addNavigationIfAllowed(
+                navigation, LanguageManager.text("nav.equipment"), "EQUIPMENT"
+        );
+
+        addNavigationIfAllowed(
+                navigation, LanguageManager.text("nav.bookings"), "BOOKINGS"
+        );
+
+        addNavigationIfAllowed(
+                navigation, LanguageManager.text("nav.returns"), "RETURNS"
+        );
+
+        addNavigationIfAllowed(
+                navigation, LanguageManager.text("nav.users"), "USERS"
+        );
+
+        addNavigationIfAllowed(
+                navigation, LanguageManager.text("nav.reports"), "REPORTS"
+        );
+
+        addNavigationIfAllowed(
+                navigation, LanguageManager.text("nav.settings"), "SETTINGS"
+        );
 
         // Logged-in user section
         JPanel userPanel = new JPanel(new BorderLayout(0, 12));
@@ -121,14 +146,18 @@ public class MainFrame extends JFrame {
                 "<html>" + fullName + "<br><small>"
                         + userRole + "</small></html>"
         );
+
         userName.setForeground(Color.WHITE);
         userName.setFont(new Font("Arial", Font.BOLD, 13));
 
         userDetails.add(userIcon, BorderLayout.WEST);
         userDetails.add(userName, BorderLayout.CENTER);
 
-        // Log Out button
-        JButton logoutButton = new JButton("Log Out");
+        // Logout button
+        JButton logoutButton = new JButton(
+                LanguageManager.text("nav.logout")
+        );
+
         logoutButton.setFont(new Font("Arial", Font.BOLD, 13));
         logoutButton.setForeground(Color.WHITE);
         logoutButton.setBackground(new Color(192, 57, 43));
@@ -137,9 +166,11 @@ public class MainFrame extends JFrame {
         logoutButton.setOpaque(true);
         logoutButton.setCursor(new Cursor(Cursor.HAND_CURSOR));
         logoutButton.setBorder(new EmptyBorder(10, 15, 10, 15));
+
         logoutButton.addActionListener(e -> logout());
 
         logoutButton.addMouseListener(new java.awt.event.MouseAdapter() {
+
             @Override
             public void mouseEntered(java.awt.event.MouseEvent e) {
                 logoutButton.setBackground(new Color(231, 76, 60));
@@ -162,7 +193,9 @@ public class MainFrame extends JFrame {
     }
 
     private void addNavigationIfAllowed(
-            JPanel navigation, String text, String screen) {
+            JPanel navigation,
+            String text,
+            String screen) {
 
         if (hasAccess(screen)) {
             navigation.add(createNavButton(text, screen));
@@ -172,6 +205,7 @@ public class MainFrame extends JFrame {
     private JButton createNavButton(String text, String screen) {
 
         JButton button = new JButton(text);
+
         button.setFont(new Font("Arial", Font.PLAIN, 14));
         button.setForeground(Color.WHITE);
         button.setBackground(SIDEBAR_COLOR);
@@ -229,51 +263,66 @@ public class MainFrame extends JFrame {
                         || screen.equals("SETTINGS");
 
             default:
-                // Unknown roles receive no screen permissions.
                 return false;
         }
     }
-
 
     private JPanel createMainContent() {
 
         JPanel main = new JPanel(new BorderLayout());
         main.setBackground(BACKGROUND_COLOR);
 
-        // Add the application header.
+        // Application header
         main.add(createHeader(), BorderLayout.NORTH);
 
-        // Dashboard is available to all authenticated roles.
+        // Dashboard
         contentPanel.add(new DashboardPanel(), "DASHBOARD");
 
-        // Equipment and bookings are available to all roles.
-        contentPanel.add(new EquipmentPanel(loggedInUser), "EQUIPMENT");
+        // Equipment and bookings
+        contentPanel.add(
+                new EquipmentPanel(loggedInUser),
+                "EQUIPMENT"
+        );
 
-        contentPanel.add(new BookingPanel(loggedInUser), "BOOKINGS");
+        contentPanel.add(
+                new BookingPanel(loggedInUser),
+                "BOOKINGS"
+        );
 
-        // Only create screens the logged-in user can access.
+        // Role-specific screens
         if (hasAccess("RETURNS")) {
-            contentPanel.add(new ReturnsPanel(loggedInUser), "RETURNS");
+            contentPanel.add(
+                    new ReturnsPanel(loggedInUser),
+                    "RETURNS"
+            );
         }
 
         if (hasAccess("USERS")) {
-            contentPanel.add(new UserManagementPanel(loggedInUser), "USERS");
+            contentPanel.add(
+                    new UserManagementPanel(loggedInUser),
+                    "USERS"
+            );
         }
 
         if (hasAccess("REPORTS")) {
-            contentPanel.add(new ReportsPanel(), "REPORTS");
+            contentPanel.add(
+                    new ReportsPanel(),
+                    "REPORTS"
+            );
         }
 
         if (hasAccess("SETTINGS")) {
-            contentPanel.add(new SettingsPanel(), "SETTINGS");
+            contentPanel.add(
+                    new SettingsPanel(this::refreshForLanguageChange),
+                    "SETTINGS"
+            );
         }
 
-        // IMPORTANT: Attach the CardLayout panel to the main window.
+        // Attach CardLayout panel to the main window.
         main.add(contentPanel, BorderLayout.CENTER);
 
         return main;
     }
-
 
     private JPanel createHeader() {
 
@@ -281,16 +330,21 @@ public class MainFrame extends JFrame {
         header.setBackground(Color.WHITE);
         header.setBorder(new EmptyBorder(18, 25, 18, 25));
 
-        JLabel heading = new JLabel("CampusRent Management");
+        JLabel heading = new JLabel(
+                LanguageManager.text("app.heading")
+        );
+
         heading.setFont(new Font("Arial", Font.BOLD, 21));
         heading.setForeground(TEXT_COLOR);
 
         String fullName = loggedInUser.getFirstName()
                 + " " + loggedInUser.getLastName();
 
-        userLabel = new JLabel(
-                "Welcome, " + fullName + " (" + userRole + ")"
+        JLabel userLabel = new JLabel(
+                LanguageManager.text("app.welcome")
+                        + ", " + fullName + " (" + userRole + ")"
         );
+
         userLabel.setFont(new Font("Arial", Font.PLAIN, 13));
         userLabel.setForeground(Color.GRAY);
 
@@ -306,7 +360,10 @@ public class MainFrame extends JFrame {
         statusBar.setBackground(Color.WHITE);
         statusBar.setBorder(new EmptyBorder(10, 18, 10, 18));
 
-        JLabel status = new JLabel("CampusRent | System Ready");
+        JLabel status = new JLabel(
+                "CampusRent | " + LanguageManager.text("app.ready")
+        );
+
         dateTimeLabel = new JLabel();
         dateTimeLabel.setForeground(Color.GRAY);
 
@@ -324,7 +381,8 @@ public class MainFrame extends JFrame {
 
             String currentTime = LocalDateTime.now().format(
                     DateTimeFormatter.ofPattern(
-                            "dd MMM yyyy | HH:mm:ss"
+                            "dd MMM yyyy | HH:mm:ss",
+                            LanguageManager.getLocale()
                     )
             );
 
@@ -334,13 +392,12 @@ public class MainFrame extends JFrame {
 
     private void showScreen(String screen) {
 
-        // Check access again before opening a screen.
         if (!hasAccess(screen)) {
 
             JOptionPane.showMessageDialog(
                     this,
-                    "You do not have permission to access this section.",
-                    "Access Denied",
+                    LanguageManager.text("dialog.accessDenied"),
+                    LanguageManager.text("dialog.accessTitle"),
                     JOptionPane.WARNING_MESSAGE
             );
 
@@ -351,14 +408,35 @@ public class MainFrame extends JFrame {
     }
 
     /**
-     * Confirms logout, stops the clock timer, and returns to the login screen.
+     * Recreates the main window after the language has been changed.
+     * The selected language is loaded from saved preferences.
+     */
+    private void refreshForLanguageChange() {
+
+        SwingUtilities.invokeLater(() -> {
+
+            if (clockTimer != null) {
+                clockTimer.stop();
+            }
+
+            dispose();
+
+            MainFrame refreshedFrame = new MainFrame(loggedInUser);
+            refreshedFrame.setLocationRelativeTo(null);
+            refreshedFrame.setVisible(true);
+        });
+    }
+
+    /**
+     * Confirms logout, stops the clock timer,
+     * and returns to the login screen.
      */
     private void logout() {
 
         int choice = JOptionPane.showConfirmDialog(
                 this,
-                "Are you sure you want to log out?",
-                "Confirm Logout",
+                LanguageManager.text("dialog.logoutConfirm"),
+                LanguageManager.text("dialog.logoutTitle"),
                 JOptionPane.YES_NO_OPTION,
                 JOptionPane.QUESTION_MESSAGE
         );

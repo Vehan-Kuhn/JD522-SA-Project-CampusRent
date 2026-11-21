@@ -3,7 +3,7 @@ package za.ac.ctu.campusrent.service;
 
 import za.ac.ctu.campusrent.model.Booking;
 import za.ac.ctu.campusrent.model.Equipment;
-
+import java.util.function.IntConsumer;
 import java.io.BufferedWriter;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -23,6 +23,17 @@ public class CsvService {
     }
 
     public ImportResult importEquipment(Path file) throws Exception {
+        return importEquipment(file, ignored -> {
+        });
+    }
+
+    public ImportResult importEquipment(
+            Path file, IntConsumer progress) throws Exception {
+
+        if (progress == null) {
+            progress = ignored -> {
+            };
+        }
 
         if (file == null || !Files.isRegularFile(file)) {
             throw new IOException("The selected CSV file does not exist.");
@@ -109,6 +120,7 @@ public class CsvService {
 
                 result.errors.add(
                         "Row " + (i + 1) + ": " + ex.getMessage()
+
                 );
             }
         }

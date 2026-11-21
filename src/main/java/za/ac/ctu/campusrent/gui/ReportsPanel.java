@@ -5,6 +5,7 @@ import za.ac.ctu.campusrent.model.Booking;
 import za.ac.ctu.campusrent.model.Equipment;
 import za.ac.ctu.campusrent.service.BookingService;
 import za.ac.ctu.campusrent.service.EquipmentService;
+import za.ac.ctu.campusrent.service.StreamReportService;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
@@ -27,12 +28,19 @@ import java.util.TreeMap;
 import java.util.concurrent.ExecutionException;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
-import za.ac.ctu.campusrent.service.StreamReportService;
 
+/**
+ * Reports dashboard with database-backed statistics,
+ * Stream API demonstrations and CSV export.
+ */
 public class ReportsPanel extends JPanel {
 
-    private final BookingService bookingService;
-    private final EquipmentService equipmentService;
+    private final BookingService bookingService =
+            new BookingService();
+
+    private final EquipmentService equipmentService =
+            new EquipmentService();
+
     private final StreamReportService streamReportService =
             new StreamReportService();
 
@@ -40,39 +48,49 @@ public class ReportsPanel extends JPanel {
     private final JLabel availableCountLabel = new JLabel("0");
     private final JLabel bookingCountLabel = new JLabel("0");
     private final JLabel revenueLabel = new JLabel("R0.00");
-    private final JLabel lastUpdatedLabel = new JLabel("Not loaded yet");
 
-    private final DefaultTableModel statusModel =
-            createModel("Booking Status", "Number of Bookings");
+    private final JLabel lastUpdatedLabel = new JLabel(
+            t("reports.notLoaded"));
 
-    private final DefaultTableModel availabilityModel =
-            createModel("Equipment Status", "Number of Items");
+    private final DefaultTableModel statusModel = createModel(
+            "reports.column.bookingStatus",
+            "reports.column.bookingCount");
 
-    private final DefaultTableModel topEquipmentModel =
-            createModel("Equipment", "Bookings");
+    private final DefaultTableModel availabilityModel = createModel(
+            "reports.column.equipmentStatus",
+            "reports.column.itemCount");
 
-    private final DefaultTableModel categoryRevenueModel =
-            createModel("Category", "Booking Value (R)");
+    private final DefaultTableModel topEquipmentModel = createModel(
+            "reports.column.equipment",
+            "reports.column.bookings");
 
-    private final DefaultTableModel campusRevenueModel =
-            createModel("Campus ID", "Booking Value (R)");
+    private final DefaultTableModel categoryRevenueModel = createModel(
+            "reports.column.category",
+            "reports.column.bookingValue");
 
-    private final DefaultTableModel overdueModel =
-            createModel("Rental Timing", "Number of Bookings");
+    private final DefaultTableModel campusRevenueModel = createModel(
+            "reports.column.campusId",
+            "reports.column.bookingValue");
+
+    private final DefaultTableModel overdueModel = createModel(
+            "reports.column.rentalTiming",
+            "reports.column.bookingCount");
 
     private final JButton refreshButton =
-            new JButton("Refresh Reports");
+            new JButton(t("reports.refresh"));
 
     private final JButton exportButton =
-            new JButton("Export CSV");
+            new JButton(t("reports.export"));
 
     private final NumberFormat currencyFormat =
             NumberFormat.getCurrencyInstance(
                     Locale.forLanguageTag("en-ZA"));
 
+    private static String t(String key) {
+        return LanguageManager.text(key);
+    }
+
     public ReportsPanel() {
-        bookingService = new BookingService();
-        equipmentService = new EquipmentService();
 
         setLayout(new BorderLayout(15, 15));
         setBackground(new Color(245, 247, 250));
@@ -87,8 +105,8 @@ public class ReportsPanel extends JPanel {
 
         loadReports();
 
-        // Run the 100,000-record performance demonstration
-        // without blocking the Swing interface.
+        // Demonstrate sequential and parallel streams
+        // without blocking the Swing event thread.
         new SwingWorker<Void, Void>() {
 
             @Override
@@ -102,17 +120,23 @@ public class ReportsPanel extends JPanel {
 
     private JPanel createHeader() {
 
-        JPanel header = new JPanel(new BorderLayout(10, 12));
+        JPanel header = new JPanel(
+                new BorderLayout(10, 12));
+
         header.setOpaque(false);
 
-        JPanel titlePanel = new JPanel(new BorderLayout(0, 5));
+        JPanel titlePanel = new JPanel(
+                new BorderLayout(0, 5));
+
         titlePanel.setOpaque(false);
 
-        JLabel heading = new JLabel("Reports Dashboard");
+        JLabel heading = new JLabel(
+                t("reports.heading"));
+
         heading.setFont(new Font("Arial", Font.BOLD, 25));
 
         JLabel subtitle = new JLabel(
-                "Live equipment, booking and rental performance.");
+                t("reports.subtitle"));
 
         subtitle.setForeground(Color.GRAY);
 
@@ -124,8 +148,13 @@ public class ReportsPanel extends JPanel {
 
         buttons.setOpaque(false);
 
-        styleButton(refreshButton, new Color(41, 128, 185));
-        styleButton(exportButton, new Color(39, 174, 96));
+        styleButton(
+                refreshButton,
+                new Color(41, 128, 185));
+
+        styleButton(
+                exportButton,
+                new Color(39, 174, 96));
 
         buttons.add(refreshButton);
         buttons.add(exportButton);
@@ -138,7 +167,9 @@ public class ReportsPanel extends JPanel {
 
     private JPanel createReportContent() {
 
-        JPanel content = new JPanel(new BorderLayout(15, 15));
+        JPanel content = new JPanel(
+                new BorderLayout(15, 15));
+
         content.setOpaque(false);
 
         JPanel summary = new JPanel(
@@ -147,43 +178,49 @@ public class ReportsPanel extends JPanel {
         summary.setOpaque(false);
 
         summary.add(createSummaryCard(
-                "Total Equipment",
+                t("reports.totalEquipment"),
                 equipmentCountLabel,
                 new Color(52, 152, 219)));
 
         summary.add(createSummaryCard(
-                "Available Equipment",
+                t("reports.availableEquipment"),
                 availableCountLabel,
                 new Color(39, 174, 96)));
 
         summary.add(createSummaryCard(
-                "Total Bookings",
+                t("reports.totalBookings"),
                 bookingCountLabel,
                 new Color(142, 68, 173)));
 
         summary.add(createSummaryCard(
-                "Booking Value",
+                t("reports.bookingValue"),
                 revenueLabel,
                 new Color(230, 126, 34)));
 
         JTabbedPane tabs = new JTabbedPane();
 
-        tabs.addTab("Booking Status",
+        tabs.addTab(
+                t("reports.tab.bookingStatus"),
                 createTablePanel(statusModel));
 
-        tabs.addTab("Equipment Availability",
+        tabs.addTab(
+                t("reports.tab.availability"),
                 createTablePanel(availabilityModel));
 
-        tabs.addTab("Top Rented Equipment",
+        tabs.addTab(
+                t("reports.tab.topEquipment"),
                 createTablePanel(topEquipmentModel));
 
-        tabs.addTab("Category Revenue",
+        tabs.addTab(
+                t("reports.tab.categoryRevenue"),
                 createTablePanel(categoryRevenueModel));
 
-        tabs.addTab("Campus Revenue",
+        tabs.addTab(
+                t("reports.tab.campusRevenue"),
                 createTablePanel(campusRevenueModel));
 
-        tabs.addTab("On-Time / Overdue",
+        tabs.addTab(
+                t("reports.tab.overdue"),
                 createTablePanel(overdueModel));
 
         content.add(summary, BorderLayout.NORTH);
@@ -202,7 +239,7 @@ public class ReportsPanel extends JPanel {
                 new Font("Arial", Font.PLAIN, 11));
 
         JLabel note = new JLabel(
-                "Booking value excludes cancelled bookings.");
+                t("reports.footerNote"));
 
         note.setForeground(Color.GRAY);
         note.setFont(new Font("Arial", Font.PLAIN, 11));
@@ -223,13 +260,14 @@ public class ReportsPanel extends JPanel {
 
         card.setBackground(Color.WHITE);
 
-        card.setBorder(BorderFactory.createCompoundBorder(
-                BorderFactory.createLineBorder(
-                        new Color(225, 230, 235)),
-                new EmptyBorder(16, 16, 16, 16)
-        ));
+        card.setBorder(
+                BorderFactory.createCompoundBorder(
+                        BorderFactory.createLineBorder(
+                                new Color(225, 230, 235)),
+                        new EmptyBorder(16, 16, 16, 16)));
 
         JLabel titleLabel = new JLabel(title);
+
         titleLabel.setForeground(Color.GRAY);
         titleLabel.setFont(
                 new Font("Arial", Font.PLAIN, 12));
@@ -245,35 +283,51 @@ public class ReportsPanel extends JPanel {
         return card;
     }
 
-    private JPanel createTablePanel(DefaultTableModel model) {
+    private JPanel createTablePanel(
+            DefaultTableModel model) {
 
         JPanel panel = new JPanel(new BorderLayout());
 
         panel.setBackground(Color.WHITE);
-        panel.setBorder(new EmptyBorder(12, 12, 12, 12));
+        panel.setBorder(
+                new EmptyBorder(12, 12, 12, 12));
 
         JTable table = new JTable(model);
 
         table.setRowHeight(29);
-        table.setFont(new Font("Arial", Font.PLAIN, 13));
+        table.setFont(
+                new Font("Arial", Font.PLAIN, 13));
 
         table.getTableHeader().setFont(
                 new Font("Arial", Font.BOLD, 13));
 
         table.setFillsViewportHeight(true);
         table.setAutoCreateRowSorter(true);
+        table.getTableHeader().setReorderingAllowed(false);
 
-        panel.add(new JScrollPane(table), BorderLayout.CENTER);
+        panel.add(
+                new JScrollPane(table),
+                BorderLayout.CENTER);
 
         return panel;
     }
 
-    private DefaultTableModel createModel(String... columns) {
+    private DefaultTableModel createModel(
+            String... columnKeys) {
+
+        String[] columns = new String[columnKeys.length];
+
+        for (int i = 0; i < columnKeys.length; i++) {
+            columns[i] = t(columnKeys[i]);
+        }
 
         return new DefaultTableModel(columns, 0) {
 
             @Override
-            public boolean isCellEditable(int row, int column) {
+            public boolean isCellEditable(
+                    int row,
+                    int column) {
+
                 return false;
             }
         };
@@ -283,12 +337,15 @@ public class ReportsPanel extends JPanel {
             JButton button,
             Color background) {
 
-        button.setFont(new Font("Arial", Font.BOLD, 12));
+        button.setFont(
+                new Font("Arial", Font.BOLD, 12));
+
         button.setForeground(Color.WHITE);
         button.setBackground(background);
         button.setFocusPainted(false);
         button.setBorderPainted(false);
         button.setOpaque(true);
+
         button.setCursor(
                 new Cursor(Cursor.HAND_CURSOR));
 
@@ -296,12 +353,17 @@ public class ReportsPanel extends JPanel {
                 new EmptyBorder(10, 14, 10, 14));
     }
 
-    // Retrieves database data without blocking the GUI.
+    // ---------------------------------------------------------
+    // LOAD REPORTS
+    // ---------------------------------------------------------
+
     private void loadReports() {
 
         refreshButton.setEnabled(false);
         exportButton.setEnabled(false);
-        refreshButton.setText("Loading...");
+
+        refreshButton.setText(
+                t("reports.loading"));
 
         new SwingWorker<ReportData, Void>() {
 
@@ -315,7 +377,9 @@ public class ReportsPanel extends JPanel {
                 List<Equipment> equipment =
                         equipmentService.getAllEquipment();
 
-                return new ReportData(bookings, equipment);
+                return new ReportData(
+                        bookings,
+                        equipment);
             }
 
             @Override
@@ -327,31 +391,38 @@ public class ReportsPanel extends JPanel {
 
                     updateDashboard(data);
 
+                    DateTimeFormatter formatter =
+                            DateTimeFormatter.ofPattern(
+                                    "dd MMM yyyy HH:mm:ss",
+                                    LanguageManager.getLocale());
+
                     lastUpdatedLabel.setText(
-                            "Last updated: " +
-                                    LocalDateTime.now().format(
-                                            DateTimeFormatter.ofPattern(
-                                                    "dd MMM yyyy HH:mm:ss"))
-                    );
+                            t("reports.lastUpdated")
+                                    + " "
+                                    + LocalDateTime.now()
+                                    .format(formatter));
 
                 } catch (InterruptedException ex) {
 
                     Thread.currentThread().interrupt();
 
                     showError(
-                            "Report loading was interrupted.");
+                            t("reports.interrupted"));
 
                 } catch (ExecutionException ex) {
 
                     showError(
-                            "Could not load reports: "
+                            t("reports.loadError")
+                                    + " "
                                     + getErrorMessage(ex));
 
                 } finally {
 
                     refreshButton.setEnabled(true);
                     exportButton.setEnabled(true);
-                    refreshButton.setText("Refresh Reports");
+
+                    refreshButton.setText(
+                            t("reports.refresh"));
                 }
             }
 
@@ -362,49 +433,65 @@ public class ReportsPanel extends JPanel {
 
         List<Booking> bookings = data.bookings;
         List<Equipment> equipment = data.equipment;
-        // Generate the required Stream API reports.
+
         StreamReportService.StreamReport streamReport =
-                streamReportService.generateReport(bookings, equipment);
-// Demonstrate Optional safely.
+                streamReportService.generateReport(
+                        bookings,
+                        equipment);
+
+        // Preserve the Stream API console demonstrations.
         streamReport.firstActiveBooking().ifPresentOrElse(
                 booking -> System.out.println(
-                        "First active booking: " + booking.getBookingId()),
-                () -> System.out.println("No active bookings found.")
-        );
+                        "First active booking: "
+                                + booking.getBookingId()),
+                () -> System.out.println(
+                        "No active bookings found."));
 
-// Display Stream API results in the console.
-        System.out.println("\n========== STREAM REPORTS ==========");
+        System.out.println(
+                "\n========== STREAM REPORTS ==========");
 
         System.out.println("Top five rented equipment:");
 
         streamReport.topFive().forEach(item ->
                 System.out.println(
                         item.equipmentName()
-                                + " - " + item.rentalCount() + " rentals")
-        );
+                                + " - "
+                                + item.rentalCount()
+                                + " rentals"));
 
-        System.out.println("Bookings per campus: "
-                + streamReport.bookingsPerCampus());
+        System.out.println(
+                "Bookings per campus: "
+                        + streamReport.bookingsPerCampus());
 
-        System.out.println("Revenue per campus: "
-                + streamReport.revenuePerCampus());
+        System.out.println(
+                "Revenue per campus: "
+                        + streamReport.revenuePerCampus());
 
-        System.out.println("Revenue per category: "
-                + streamReport.revenuePerCategory());
+        System.out.println(
+                "Revenue per category: "
+                        + streamReport.revenuePerCategory());
 
-        System.out.println("On-time bookings: "
-                + streamReport.onTimeAndOverdue().get(false).size());
+        System.out.println(
+                "On-time bookings: "
+                        + streamReport.onTimeAndOverdue()
+                        .get(false).size());
 
-        System.out.println("Overdue bookings: "
-                + streamReport.onTimeAndOverdue().get(true).size());
+        System.out.println(
+                "Overdue bookings: "
+                        + streamReport.onTimeAndOverdue()
+                        .get(true).size());
 
-        System.out.println("Total revenue: R"
-                + streamReport.totalRevenue());
+        System.out.println(
+                "Total revenue: R"
+                        + streamReport.totalRevenue());
 
-        System.out.println("Average equipment daily rate: R"
-                + streamReport.averageDailyRate());
+        System.out.println(
+                "Average equipment daily rate: R"
+                        + streamReport.averageDailyRate());
 
-        System.out.println("====================================");
+        System.out.println(
+                "====================================");
+
         equipmentCountLabel.setText(
                 String.valueOf(equipment.size()));
 
@@ -438,7 +525,10 @@ public class ReportsPanel extends JPanel {
         demonstrateAdvancedStreams(bookings);
     }
 
-    // GROUPING BY: Count bookings for each status.
+    // ---------------------------------------------------------
+    // BOOKING STATUS REPORT
+    // ---------------------------------------------------------
+
     private void updateBookingStatuses(
             List<Booking> bookings) {
 
@@ -451,19 +541,33 @@ public class ReportsPanel extends JPanel {
                                 : b.getBookingStatus()
                                 .toUpperCase(Locale.ROOT),
                         TreeMap::new,
-                        Collectors.counting()
-                ));
+                        Collectors.counting()));
 
         counts.forEach((status, count) ->
-                statusModel.addRow(
-                        new Object[]{status, count}));
+                statusModel.addRow(new Object[]{
+                        translateBookingStatus(status),
+                        count
+                }));
     }
 
-    // GROUPING BY: Count equipment availability.
+    private String translateBookingStatus(String status) {
+
+        if ("UNKNOWN".equals(status)) {
+            return t("reports.unknown");
+        }
+
+        return t("booking.status." + status);
+    }
+
+    // ---------------------------------------------------------
+    // EQUIPMENT AVAILABILITY REPORT
+    // ---------------------------------------------------------
+
     private void updateEquipmentAvailability(
             List<Equipment> equipment) {
 
         availabilityModel.setRowCount(0);
+
         Map<String, Long> counts = equipment.stream()
                 .collect(Collectors.groupingBy(
                         e -> e.getAvailabilityStatus() == null
@@ -471,15 +575,21 @@ public class ReportsPanel extends JPanel {
                                 : e.getAvailabilityStatus()
                                 .toUpperCase(Locale.ROOT),
                         TreeMap::new,
-                        Collectors.counting()
-                ));
+                        Collectors.counting()));
 
         counts.forEach((status, count) ->
-                availabilityModel.addRow(
-                        new Object[]{status, count}));
+                availabilityModel.addRow(new Object[]{
+                        "UNKNOWN".equals(status)
+                                ? t("reports.unknown")
+                                : t("reports.availability." + status),
+                        count
+                }));
     }
 
-    // Populate the Top Rented Equipment table from StreamReportService.
+    // ---------------------------------------------------------
+    // TOP RENTED EQUIPMENT
+    // ---------------------------------------------------------
+
     private void updateTopEquipmentFromStreams(
             StreamReportService.StreamReport report) {
 
@@ -489,54 +599,13 @@ public class ReportsPanel extends JPanel {
                 topEquipmentModel.addRow(new Object[]{
                         item.equipmentName(),
                         item.rentalCount()
-                })
-        );
+                }));
     }
 
-    // SORTING AND LIMIT: Display the five most rented items.
-    private void updateTopEquipment(
-            List<Booking> bookings,
-            List<Equipment> equipment) {
+    // ---------------------------------------------------------
+    // CATEGORY REVENUE
+    // ---------------------------------------------------------
 
-        topEquipmentModel.setRowCount(0);
-
-        Map<Integer, String> equipmentNames =
-                equipment.stream()
-                        .collect(Collectors.toMap(
-                                Equipment::getEquipmentId,
-                                Equipment::getEquipmentName,
-                                (first, second) -> first
-                        ));
-
-        Map<Integer, Long> rentalCounts =
-                bookings.stream()
-                        .filter(b -> !"CANCELLED".equalsIgnoreCase(
-                                b.getBookingStatus()))
-                        .collect(Collectors.groupingBy(
-                                Booking::getEquipmentId,
-                                Collectors.counting()
-                        ));
-
-        rentalCounts.entrySet().stream()
-                .sorted(
-                        Map.Entry.<Integer, Long>
-                                comparingByValue().reversed())
-                .limit(5)
-                .forEach(entry -> {
-
-                    String name = equipmentNames.getOrDefault(
-                            entry.getKey(),
-                            "Equipment #" + entry.getKey());
-
-                    topEquipmentModel.addRow(
-                            new Object[]{
-                                    name,
-                                    entry.getValue()
-                            });
-                });
-    }
-
-    // GROUPING BY AND SUMMING: Revenue per equipment category.
     private void updateCategoryRevenue(
             List<Booking> bookings,
             List<Equipment> equipment) {
@@ -548,8 +617,7 @@ public class ReportsPanel extends JPanel {
                         .collect(Collectors.toMap(
                                 Equipment::getEquipmentId,
                                 e -> e,
-                                (first, second) -> first
-                        ));
+                                (first, second) -> first));
 
         Map<String, Double> revenue =
                 bookings.stream()
@@ -569,18 +637,23 @@ public class ReportsPanel extends JPanel {
                                 },
                                 TreeMap::new,
                                 Collectors.summingDouble(
-                                        Booking::getTotalCost)
-                        ));
+                                        Booking::getTotalCost)));
 
         revenue.forEach((category, amount) ->
-                categoryRevenueModel.addRow(
-                        new Object[]{
-                                category,
-                                currencyFormat.format(amount)
-                        }));
+                categoryRevenueModel.addRow(new Object[]{
+                        "UNKNOWN".equals(category)
+                                ? t("reports.unknown")
+                                : t("reports.category."
+                                + category.toUpperCase(
+                                Locale.ROOT)),
+                        currencyFormat.format(amount)
+                }));
     }
 
-    // GROUPING BY AND SUMMING: Revenue per campus.
+    // ---------------------------------------------------------
+    // CAMPUS REVENUE
+    // ---------------------------------------------------------
+
     private void updateCampusRevenue(
             List<Booking> bookings,
             List<Equipment> equipment) {
@@ -592,8 +665,7 @@ public class ReportsPanel extends JPanel {
                         .collect(Collectors.toMap(
                                 Equipment::getEquipmentId,
                                 e -> e,
-                                (first, second) -> first
-                        ));
+                                (first, second) -> first));
 
         Map<Integer, Double> revenue =
                 bookings.stream()
@@ -606,18 +678,19 @@ public class ReportsPanel extends JPanel {
                                         b.getEquipmentId()).getCampusId(),
                                 TreeMap::new,
                                 Collectors.summingDouble(
-                                        Booking::getTotalCost)
-                        ));
+                                        Booking::getTotalCost)));
 
         revenue.forEach((campusId, amount) ->
-                campusRevenueModel.addRow(
-                        new Object[]{
-                                campusId,
-                                currencyFormat.format(amount)
-                        }));
+                campusRevenueModel.addRow(new Object[]{
+                        campusId,
+                        currencyFormat.format(amount)
+                }));
     }
 
-    // PARTITIONING BY: Separate overdue from non-overdue bookings.
+    // ---------------------------------------------------------
+    // ON-TIME / OVERDUE REPORT
+    // ---------------------------------------------------------
+
     private void updateOverdueReport(
             List<Booking> bookings) {
 
@@ -630,17 +703,23 @@ public class ReportsPanel extends JPanel {
                         .collect(Collectors.partitioningBy(
                                 b -> "OVERDUE".equalsIgnoreCase(
                                         b.getBookingStatus()),
-                                Collectors.counting()
-                        ));
+                                Collectors.counting()));
 
-        overdueModel.addRow(
-                new Object[]{"Overdue", timing.get(true)});
+        overdueModel.addRow(new Object[]{
+                t("reports.overdue"),
+                timing.get(true)
+        });
 
-        overdueModel.addRow(
-                new Object[]{"Not Overdue", timing.get(false)});
+        overdueModel.addRow(new Object[]{
+                t("reports.notOverdue"),
+                timing.get(false)
+        });
     }
 
-    // OPTIONAL, REDUCE, PRIMITIVE STREAM AND FLATMAP.
+    // ---------------------------------------------------------
+    // ADVANCED STREAM API DEMONSTRATIONS
+    // ---------------------------------------------------------
+
     private void demonstrateAdvancedStreams(
             List<Booking> bookings) {
 
@@ -651,10 +730,10 @@ public class ReportsPanel extends JPanel {
                 booking -> System.out.println(
                         "First booking ID: "
                                 + booking.getBookingId()),
-                () -> System.out.println("No bookings found.")
-        );
+                () -> System.out.println(
+                        "No bookings found."));
 
-        // REDUCE: Calculate total booking value.
+        // REDUCE
         double totalValue = bookings.stream()
                 .filter(b -> !"CANCELLED".equalsIgnoreCase(
                         b.getBookingStatus()))
@@ -665,7 +744,7 @@ public class ReportsPanel extends JPanel {
                 "Total value using reduce: "
                         + currencyFormat.format(totalValue));
 
-        // PRIMITIVE STREAM: Calculate average booking value.
+        // PRIMITIVE STREAM
         double averageValue = bookings.stream()
                 .filter(b -> !"CANCELLED".equalsIgnoreCase(
                         b.getBookingStatus()))
@@ -677,7 +756,7 @@ public class ReportsPanel extends JPanel {
                 "Average booking value: "
                         + currencyFormat.format(averageValue));
 
-        // FLATMAP: Expand each booking into rental-day entries.
+        // FLATMAP
         List<Long> rentalDays = bookings.stream()
                 .filter(b -> b.getStartDate() != null
                         && b.getDueDate() != null)
@@ -690,10 +769,14 @@ public class ReportsPanel extends JPanel {
                 .toList();
 
         System.out.println(
-                "Total rental-day entries: " + rentalDays.size());
+                "Total rental-day entries: "
+                        + rentalDays.size());
     }
 
-    // PERFORMANCE TEST: Compare sequential and parallel streams.
+    // ---------------------------------------------------------
+    // SEQUENTIAL / PARALLEL PERFORMANCE TEST
+    // ---------------------------------------------------------
+
     private void benchmarkStreams() {
 
         List<SyntheticBooking> syntheticBookings =
@@ -701,8 +784,7 @@ public class ReportsPanel extends JPanel {
                         .mapToObj(i -> new SyntheticBooking(
                                 i % 20,
                                 100.0 + (i % 10),
-                                i % 5 == 0
-                        ))
+                                i % 5 == 0))
                         .toList();
 
         long sequentialStart = System.nanoTime();
@@ -712,8 +794,7 @@ public class ReportsPanel extends JPanel {
                         .collect(Collectors.groupingBy(
                                 SyntheticBooking::equipmentId,
                                 Collectors.summingDouble(
-                                        SyntheticBooking::amount)
-                        ));
+                                        SyntheticBooking::amount)));
 
         long sequentialTime =
                 System.nanoTime() - sequentialStart;
@@ -725,13 +806,13 @@ public class ReportsPanel extends JPanel {
                         .collect(Collectors.groupingBy(
                                 SyntheticBooking::equipmentId,
                                 Collectors.summingDouble(
-                                        SyntheticBooking::amount)
-                        ));
+                                        SyntheticBooking::amount)));
 
         long parallelTime =
                 System.nanoTime() - parallelStart;
 
-        System.out.println("\n--- STREAM PERFORMANCE TEST ---");
+        System.out.println(
+                "\n--- STREAM PERFORMANCE TEST ---");
 
         System.out.println(
                 "Synthetic bookings: "
@@ -756,12 +837,16 @@ public class ReportsPanel extends JPanel {
             boolean overdue) {
     }
 
-    // Export all report tables into one CSV file.
+    // ---------------------------------------------------------
+    // CSV EXPORT
+    // ---------------------------------------------------------
+
     private void exportReports() {
 
         JFileChooser chooser = new JFileChooser();
 
-        chooser.setDialogTitle("Export CampusRent Reports");
+        chooser.setDialogTitle(
+                t("reports.exportTitle"));
 
         chooser.setSelectedFile(
                 new java.io.File("CampusRent_Reports.csv"));
@@ -774,33 +859,60 @@ public class ReportsPanel extends JPanel {
         Path path = chooser.getSelectedFile().toPath();
 
         if (!path.toString()
-                .toLowerCase(Locale.ROOT).endsWith(".csv")) {
+                .toLowerCase(Locale.ROOT)
+                .endsWith(".csv")) {
 
             path = Path.of(path.toString() + ".csv");
         }
 
-        try (BufferedWriter writer = Files.newBufferedWriter(
-                path, StandardCharsets.UTF_8)) {
+        try (BufferedWriter writer =
+                     Files.newBufferedWriter(
+                             path,
+                             StandardCharsets.UTF_8)) {
 
-            writeTable(writer, "BOOKING STATUS", statusModel);
-            writeTable(writer, "EQUIPMENT AVAILABILITY", availabilityModel);
-            writeTable(writer, "TOP RENTED EQUIPMENT", topEquipmentModel);
-            writeTable(writer, "CATEGORY REVENUE", categoryRevenueModel);
-            writeTable(writer, "CAMPUS REVENUE", campusRevenueModel);
-            writeTable(writer, "ON-TIME AND OVERDUE", overdueModel);
+            writeTable(
+                    writer,
+                    t("reports.tab.bookingStatus"),
+                    statusModel);
+
+            writeTable(
+                    writer,
+                    t("reports.tab.availability"),
+                    availabilityModel);
+
+            writeTable(
+                    writer,
+                    t("reports.tab.topEquipment"),
+                    topEquipmentModel);
+
+            writeTable(
+                    writer,
+                    t("reports.tab.categoryRevenue"),
+                    categoryRevenueModel);
+
+            writeTable(
+                    writer,
+                    t("reports.tab.campusRevenue"),
+                    campusRevenueModel);
+
+            writeTable(
+                    writer,
+                    t("reports.tab.overdue"),
+                    overdueModel);
 
             JOptionPane.showMessageDialog(
                     this,
-                    "Reports exported successfully:\n"
+                    t("reports.exportSuccess")
+                            + "\n"
                             + path.toAbsolutePath(),
-                    "Export Complete",
-                    JOptionPane.INFORMATION_MESSAGE
-            );
+                    t("reports.exportComplete"),
+                    JOptionPane.INFORMATION_MESSAGE);
 
         } catch (IOException ex) {
 
             showError(
-                    "Could not export reports: " + ex.getMessage());
+                    t("reports.exportError")
+                            + " " + ex.getMessage());
         }
     }
 
@@ -839,10 +951,14 @@ public class ReportsPanel extends JPanel {
                     writer.write(",");
                 }
 
-                Object value = model.getValueAt(row, column);
+                Object value =
+                        model.getValueAt(row, column);
 
-                writer.write(escapeCsv(
-                        value == null ? "" : value.toString()));
+                writer.write(
+                        escapeCsv(
+                                value == null
+                                        ? ""
+                                        : value.toString()));
             }
 
             writer.newLine();
@@ -851,7 +967,9 @@ public class ReportsPanel extends JPanel {
 
     private String escapeCsv(String value) {
 
-        return "\"" + value.replace("\"", "\"\"") + "\"";
+        return "\""
+                + value.replace("\"", "\"\"")
+                + "\"";
     }
 
     private String getErrorMessage(Throwable exception) {
@@ -872,9 +990,8 @@ public class ReportsPanel extends JPanel {
         JOptionPane.showMessageDialog(
                 this,
                 message,
-                "Reports Error",
-                JOptionPane.ERROR_MESSAGE
-        );
+                t("reports.errorTitle"),
+                JOptionPane.ERROR_MESSAGE);
     }
 
     private static class ReportData {
