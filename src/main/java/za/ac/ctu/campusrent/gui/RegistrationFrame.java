@@ -1,8 +1,11 @@
+
 package za.ac.ctu.campusrent.gui;
+
 import za.ac.ctu.campusrent.model.Campus;
 import za.ac.ctu.campusrent.model.User;
 import za.ac.ctu.campusrent.service.CampusService;
 import za.ac.ctu.campusrent.service.UserService;
+
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import java.awt.*;
@@ -32,10 +35,13 @@ public class RegistrationFrame extends JFrame {
 
     public RegistrationFrame() {
 
+        LanguageManager.loadSavedLanguage();
+        ThemeManager.loadSavedTheme();
+
         userService = new UserService();
         campusService = new CampusService();
-        ThemeManager.loadSavedTheme();
-        setTitle("CampusRent | User Registration");
+
+        setTitle(LanguageManager.text("registration.title"));
         setSize(500, 700);
         setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
         setLocationRelativeTo(null);
@@ -46,37 +52,52 @@ public class RegistrationFrame extends JFrame {
     }
 
     private void createRegistrationInterface() {
-        ThemeManager.apply(this);
-        JPanel mainPanel = new JPanel(new BorderLayout(0, 15));
+
+        JPanel mainPanel = new JPanel(
+                new BorderLayout(0, 15)
+        );
+
         mainPanel.setBackground(BACKGROUND_COLOR);
-        mainPanel.setBorder(new EmptyBorder(25, 40, 25, 40));
+        mainPanel.setBorder(
+                new EmptyBorder(25, 40, 25, 40)
+        );
 
         // Heading
         JLabel headingLabel = new JLabel(
-                "Create Your Account",
+                LanguageManager.text("registration.heading"),
                 SwingConstants.CENTER
         );
 
-        headingLabel.setFont(new Font("Arial", Font.BOLD, 25));
+        headingLabel.setFont(
+                new Font("Arial", Font.BOLD, 25)
+        );
+
         headingLabel.setForeground(SIDEBAR_COLOR);
 
         JLabel subtitleLabel = new JLabel(
-                "Complete the form to register with CampusRent.",
+                LanguageManager.text("registration.subtitle"),
                 SwingConstants.CENTER
         );
 
         subtitleLabel.setForeground(Color.GRAY);
 
-        JPanel headingPanel = new JPanel(new GridLayout(2, 1, 0, 8));
+        JPanel headingPanel = new JPanel(
+                new GridLayout(2, 1, 0, 8)
+        );
+
         headingPanel.setBackground(BACKGROUND_COLOR);
         headingPanel.add(headingLabel);
         headingPanel.add(subtitleLabel);
 
         // Registration form
-        JPanel formPanel = new JPanel(new GridBagLayout());
+        JPanel formPanel = new JPanel(
+                new GridBagLayout()
+        );
+
         formPanel.setBackground(BACKGROUND_COLOR);
 
         GridBagConstraints gbc = new GridBagConstraints();
+
         gbc.insets = new Insets(7, 5, 7, 5);
         gbc.fill = GridBagConstraints.HORIZONTAL;
         gbc.weightx = 1.0;
@@ -89,48 +110,93 @@ public class RegistrationFrame extends JFrame {
         phoneField = new JTextField(20);
 
         campusComboBox = new JComboBox<>();
-        campusComboBox.setFont(new Font("Arial", Font.PLAIN, 14));
+        campusComboBox.setFont(
+                new Font("Arial", Font.PLAIN, 14)
+        );
 
         passwordField = new JPasswordField(20);
         confirmPasswordField = new JPasswordField(20);
 
-        addFormRow(formPanel, gbc, row++, "First Name", firstNameField);
-        addFormRow(formPanel, gbc, row++, "Last Name", lastNameField);
-        addFormRow(formPanel, gbc, row++, "Email Address", emailField);
-        addFormRow(formPanel, gbc, row++, "Phone Number", phoneField);
-        addFormRow(formPanel, gbc, row++, "Campus", campusComboBox);
-        addFormRow(formPanel, gbc, row++, "Password", passwordField);
-        addFormRow(formPanel, gbc, row++, "Confirm Password",
+        addFormRow(formPanel, gbc, row++,
+                LanguageManager.text("registration.firstName"),
+                firstNameField);
+
+        addFormRow(formPanel, gbc, row++,
+                LanguageManager.text("registration.lastName"),
+                lastNameField);
+
+        addFormRow(formPanel, gbc, row++,
+                LanguageManager.text("registration.email"),
+                emailField);
+
+        addFormRow(formPanel, gbc, row++,
+                LanguageManager.text("registration.phone"),
+                phoneField);
+
+        addFormRow(formPanel, gbc, row++,
+                LanguageManager.text("registration.campus"),
+                campusComboBox);
+
+        addFormRow(formPanel, gbc, row++,
+                LanguageManager.text("registration.password"),
+                passwordField);
+
+        addFormRow(formPanel, gbc, row++,
+                LanguageManager.text("registration.confirmPassword"),
                 confirmPasswordField);
 
         // Buttons
-        registerButton = new JButton("Create Account");
-        registerButton.setFont(new Font("Arial", Font.BOLD, 14));
+        registerButton = new JButton(
+                LanguageManager.text("registration.create")
+        );
+
+        registerButton.setFont(
+                new Font("Arial", Font.BOLD, 14)
+        );
+
         registerButton.setForeground(Color.WHITE);
         registerButton.setBackground(ACCENT_COLOR);
         registerButton.setFocusPainted(false);
         registerButton.setBorderPainted(false);
-        registerButton.setCursor(new Cursor(Cursor.HAND_CURSOR));
-        registerButton.setEnabled(false);
+        registerButton.setCursor(
+                new Cursor(Cursor.HAND_CURSOR)
+        );
 
+        registerButton.setEnabled(false);
         registerButton.addActionListener(e -> registerUser());
 
-        JButton cancelButton = new JButton("Cancel");
-        cancelButton.setFont(new Font("Arial", Font.PLAIN, 14));
+        JButton cancelButton = new JButton(
+                LanguageManager.text("registration.cancel")
+        );
+
+        cancelButton.setFont(
+                new Font("Arial", Font.PLAIN, 14)
+        );
+
         cancelButton.addActionListener(e -> dispose());
 
-        JPanel buttonPanel = new JPanel(new GridLayout(1, 2, 12, 0));
+        JPanel buttonPanel = new JPanel(
+                new GridLayout(1, 2, 12, 0)
+        );
+
         buttonPanel.setBackground(BACKGROUND_COLOR);
         buttonPanel.add(registerButton);
         buttonPanel.add(cancelButton);
 
         JLabel roleLabel = new JLabel(
-                "New accounts are automatically registered as STUDENT."
+                LanguageManager.text("registration.roleNotice")
         );
-        roleLabel.setFont(new Font("Arial", Font.PLAIN, 11));
+
+        roleLabel.setFont(
+                new Font("Arial", Font.PLAIN, 11)
+        );
+
         roleLabel.setForeground(Color.GRAY);
 
-        JPanel bottomPanel = new JPanel(new BorderLayout(0, 12));
+        JPanel bottomPanel = new JPanel(
+                new BorderLayout(0, 12)
+        );
+
         bottomPanel.setBackground(BACKGROUND_COLOR);
         bottomPanel.add(roleLabel, BorderLayout.NORTH);
         bottomPanel.add(buttonPanel, BorderLayout.CENTER);
@@ -140,6 +206,8 @@ public class RegistrationFrame extends JFrame {
         mainPanel.add(bottomPanel, BorderLayout.SOUTH);
 
         add(mainPanel);
+
+        ThemeManager.apply(this);
     }
 
     private void addFormRow(
@@ -154,21 +222,27 @@ public class RegistrationFrame extends JFrame {
         gbc.weightx = 0.3;
 
         JLabel label = new JLabel(labelText);
-        label.setFont(new Font("Arial", Font.BOLD, 13));
+        label.setFont(
+                new Font("Arial", Font.BOLD, 13)
+        );
 
         panel.add(label, gbc);
 
         gbc.gridx = 1;
         gbc.weightx = 0.7;
 
-        field.setFont(new Font("Arial", Font.PLAIN, 14));
+        field.setFont(
+                new Font("Arial", Font.PLAIN, 14)
+        );
 
         panel.add(field, gbc);
     }
 
     private void loadCampuses() {
 
-        registerButton.setText("Loading campuses...");
+        registerButton.setText(
+                LanguageManager.text("registration.loading")
+        );
 
         SwingWorker<List<Campus>, Void> worker = new SwingWorker<>() {
 
@@ -181,6 +255,7 @@ public class RegistrationFrame extends JFrame {
             protected void done() {
 
                 try {
+
                     List<Campus> campuses = get();
 
                     campusComboBox.removeAllItems();
@@ -190,32 +265,41 @@ public class RegistrationFrame extends JFrame {
                     }
 
                     if (campuses.isEmpty()) {
+
                         JOptionPane.showMessageDialog(
                                 RegistrationFrame.this,
-                                "No campuses are available. Please contact an administrator.",
-                                "No Campuses Found",
+                                LanguageManager.text("registration.noCampuses"),
+                                LanguageManager.text("registration.noCampusesTitle"),
                                 JOptionPane.WARNING_MESSAGE
                         );
 
-                        registerButton.setText("Create Account");
+                        registerButton.setText(
+                                LanguageManager.text("registration.create")
+                        );
+
                         return;
                     }
 
-                    registerButton.setText("Create Account");
+                    registerButton.setText(
+                            LanguageManager.text("registration.create")
+                    );
+
                     registerButton.setEnabled(true);
 
-                } catch (Exception e) {
+                } catch (Exception ex) {
 
-                    registerButton.setText("Create Account");
+                    registerButton.setText(
+                            LanguageManager.text("registration.create")
+                    );
 
                     JOptionPane.showMessageDialog(
                             RegistrationFrame.this,
-                            "Unable to load campuses. Please check the database connection.",
-                            "Database Error",
+                            LanguageManager.text("registration.loadError"),
+                            LanguageManager.text("registration.databaseError"),
                             JOptionPane.ERROR_MESSAGE
                     );
 
-                    e.printStackTrace();
+                    ex.printStackTrace();
                 }
             }
         };
@@ -229,14 +313,18 @@ public class RegistrationFrame extends JFrame {
         String lastName = lastNameField.getText().trim();
         String email = emailField.getText().trim();
         String phone = phoneField.getText().trim();
-        String password = new String(passwordField.getPassword());
-        String confirmPassword =
-                new String(confirmPasswordField.getPassword());
+
+        String password = new String(
+                passwordField.getPassword()
+        );
+
+        String confirmPassword = new String(
+                confirmPasswordField.getPassword()
+        );
 
         Campus selectedCampus =
                 (Campus) campusComboBox.getSelectedItem();
 
-        // Required field validation
         if (firstName.isEmpty()
                 || lastName.isEmpty()
                 || email.isEmpty()
@@ -244,50 +332,43 @@ public class RegistrationFrame extends JFrame {
                 || password.isEmpty()
                 || confirmPassword.isEmpty()) {
 
-            showValidationMessage("Please complete all required fields.");
-            return;
-        }
-
-        // Campus validation
-        if (selectedCampus == null) {
-            showValidationMessage("Please select a campus.");
-            return;
-        }
-
-        // Phone validation
-        if (!phone.matches("^[0-9+()\\- ]{7,20}$")) {
-            showValidationMessage("Please enter a valid phone number.");
-            return;
-        }
-
-        // Email validation
-        if (!email.matches("^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+$")) {
-            showValidationMessage("Please enter a valid email address.");
-            return;
-        }
-
-        // Password validation
-        if (password.length() < 8) {
             showValidationMessage(
-                    "Your password must contain at least 8 characters."
+                    "registration.required"
             );
+
+            return;
+        }
+
+        if (selectedCampus == null) {
+            showValidationMessage("registration.selectCampus");
+            return;
+        }
+
+        if (!phone.matches("^[0-9+()\\- ]{7,20}$")) {
+            showValidationMessage("registration.invalidPhone");
+            return;
+        }
+
+        if (!email.matches("^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+$")) {
+            showValidationMessage("registration.invalidEmail");
+            return;
+        }
+
+        if (password.length() < 8) {
+            showValidationMessage("registration.shortPassword");
             return;
         }
 
         if (password.length() > 256) {
-            showValidationMessage(
-                    "Your password cannot exceed 256 characters."
-            );
+            showValidationMessage("registration.longPassword");
             return;
         }
 
-        // Confirm password
         if (!password.equals(confirmPassword)) {
-            showValidationMessage("Your passwords do not match.");
+            showValidationMessage("registration.passwordMismatch");
             return;
         }
 
-        // Create user
         User user = new User();
 
         user.setCampusId(selectedCampus.getCampusId());
@@ -296,18 +377,19 @@ public class RegistrationFrame extends JFrame {
         user.setEmail(email);
         user.setPhone(phone);
 
-        // Users cannot select their own role or account status.
         user.setUserRole("STUDENT");
         user.setAccountStatus("ACTIVE");
 
         registerButton.setEnabled(false);
-        registerButton.setText("Registering...");
+
+        registerButton.setText(
+                LanguageManager.text("registration.registering")
+        );
 
         SwingWorker<Integer, Void> worker = new SwingWorker<>() {
 
             @Override
             protected Integer doInBackground() throws SQLException {
-
                 return userService.registerUser(user, password);
             }
 
@@ -315,44 +397,56 @@ public class RegistrationFrame extends JFrame {
             protected void done() {
 
                 registerButton.setEnabled(true);
-                registerButton.setText("Create Account");
+
+                registerButton.setText(
+                        LanguageManager.text("registration.create")
+                );
 
                 try {
+
                     int userId = get();
 
                     if (userId > 0) {
 
                         JOptionPane.showMessageDialog(
                                 RegistrationFrame.this,
-                                "Your account has been created successfully!\n"
-                                        + "You can now log in to CampusRent.",
-                                "Registration Successful",
+                                LanguageManager.text("registration.success"),
+                                LanguageManager.text("registration.successTitle"),
                                 JOptionPane.INFORMATION_MESSAGE
                         );
 
                         dispose();
 
                     } else {
+
                         showValidationMessage(
-                                "Your account could not be created."
+                                "registration.failed"
                         );
                     }
 
-                } catch (Exception e) {
+                } catch (Exception ex) {
 
-                    Throwable cause = e.getCause();
+                    Throwable cause = ex.getCause();
 
                     if (cause instanceof IllegalArgumentException) {
-                        showValidationMessage(cause.getMessage());
-                    } else {
+
                         JOptionPane.showMessageDialog(
                                 RegistrationFrame.this,
-                                "Registration failed. Please check your database connection.",
-                                "Registration Error",
+                                cause.getMessage(),
+                                LanguageManager.text("registration.validationTitle"),
+                                JOptionPane.WARNING_MESSAGE
+                        );
+
+                    } else {
+
+                        JOptionPane.showMessageDialog(
+                                RegistrationFrame.this,
+                                LanguageManager.text("registration.error"),
+                                LanguageManager.text("registration.errorTitle"),
                                 JOptionPane.ERROR_MESSAGE
                         );
 
-                        e.printStackTrace();
+                        ex.printStackTrace();
                     }
                 }
             }
@@ -361,12 +455,12 @@ public class RegistrationFrame extends JFrame {
         worker.execute();
     }
 
-    private void showValidationMessage(String message) {
+    private void showValidationMessage(String key) {
 
         JOptionPane.showMessageDialog(
                 this,
-                message,
-                "Registration Validation",
+                LanguageManager.text(key),
+                LanguageManager.text("registration.validationTitle"),
                 JOptionPane.WARNING_MESSAGE
         );
     }

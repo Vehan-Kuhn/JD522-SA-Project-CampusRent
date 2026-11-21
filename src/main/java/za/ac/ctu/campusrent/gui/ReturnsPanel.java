@@ -1,28 +1,41 @@
+
 package za.ac.ctu.campusrent.gui;
+
 import za.ac.ctu.campusrent.model.Booking;
 import za.ac.ctu.campusrent.model.User;
 import za.ac.ctu.campusrent.service.BookingService;
+
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import java.awt.*;
+import java.text.NumberFormat;
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Locale;
 
-/** Staff/Admin screen for processing equipment returns. */
 public class ReturnsPanel extends JPanel {
 
     private final User loggedInUser;
     private final BookingService bookingService = new BookingService();
+
     private final ReturnTableModel tableModel = new ReturnTableModel();
     private final JTable returnsTable = new JTable(tableModel);
-    private final JLabel statusLabel = new JLabel("Loading returns...");
-    private final JButton completeButton = new JButton("Complete Selected Return");
-    private final JButton refreshButton = new JButton("Refresh");
+
+    private final JLabel statusLabel = new JLabel();
+    private final JButton completeButton = new JButton();
+    private final JButton refreshButton = new JButton();
+
+    private final NumberFormat currency =
+            NumberFormat.getCurrencyInstance(
+                    Locale.forLanguageTag("en-ZA"));
 
     public ReturnsPanel(User loggedInUser) {
+
         if (loggedInUser == null) {
-            throw new IllegalArgumentException("A logged-in user is required.");
+            throw new IllegalArgumentException(
+                    "A logged-in user is required.");
         }
+
         this.loggedInUser = loggedInUser;
 
         setLayout(new BorderLayout(0, 14));
@@ -37,165 +50,285 @@ public class ReturnsPanel extends JPanel {
     }
 
     private JPanel createHeader() {
+
         JPanel panel = new JPanel(new BorderLayout());
         panel.setOpaque(false);
 
-        JLabel heading = new JLabel("Returns Management");
+        JLabel heading = new JLabel(
+                LanguageManager.text("returns.heading"));
+
         heading.setFont(new Font("Arial", Font.BOLD, 24));
 
         JLabel subtitle = new JLabel(
-                "View equipment currently on loan, identify overdue items and process returns.");
+                LanguageManager.text("returns.subtitle"));
+
         subtitle.setForeground(Color.GRAY);
 
-        JPanel text = new JPanel(new GridLayout(0, 1, 0, 5));
+        JPanel text = new JPanel(
+                new GridLayout(0, 1, 0, 5));
+
         text.setOpaque(false);
         text.add(heading);
         text.add(subtitle);
+
         panel.add(text, BorderLayout.WEST);
+
         return panel;
     }
 
     private JPanel createTable() {
+
         JPanel panel = new JPanel(new BorderLayout());
+
         panel.setBackground(Color.WHITE);
-        panel.setBorder(BorderFactory.createCompoundBorder(
-                BorderFactory.createLineBorder(new Color(225, 230, 236)),
-                new EmptyBorder(12, 12, 12, 12)));
+
+        panel.setBorder(
+                BorderFactory.createCompoundBorder(
+                        BorderFactory.createLineBorder(
+                                new Color(225, 230, 236)),
+                        new EmptyBorder(12, 12, 12, 12)));
 
         returnsTable.setRowHeight(34);
-        returnsTable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+
+        returnsTable.setSelectionMode(
+                ListSelectionModel.SINGLE_SELECTION);
+
         returnsTable.setAutoCreateRowSorter(true);
+
         returnsTable.getTableHeader().setReorderingAllowed(false);
 
-        panel.add(new JScrollPane(returnsTable), BorderLayout.CENTER);
+        panel.add(
+                new JScrollPane(returnsTable),
+                BorderLayout.CENTER);
+
         return panel;
     }
 
     private JPanel createFooter() {
-        JPanel panel = new JPanel(new BorderLayout(10, 8));
+
+        JPanel panel = new JPanel(
+                new BorderLayout(10, 8));
+
         panel.setOpaque(false);
 
-        completeButton.addActionListener(e -> completeSelectedReturn());
-        refreshButton.addActionListener(e -> loadReturns());
+        completeButton.setText(
+                LanguageManager.text("returns.complete"));
 
-        JPanel actions = new JPanel(new FlowLayout(FlowLayout.LEFT, 8, 0));
+        refreshButton.setText(
+                LanguageManager.text("common.refresh"));
+
+        completeButton.addActionListener(
+                e -> completeSelectedReturn());
+
+        refreshButton.addActionListener(
+                e -> loadReturns());
+
+        JPanel actions = new JPanel(
+                new FlowLayout(FlowLayout.LEFT, 8, 0));
+
         actions.setOpaque(false);
         actions.add(completeButton);
         actions.add(refreshButton);
 
         panel.add(actions, BorderLayout.NORTH);
         panel.add(statusLabel, BorderLayout.SOUTH);
+
         return panel;
     }
 
     private void loadReturns() {
+
         setBusy(true);
-        statusLabel.setText("Checking overdue bookings and loading returns...");
 
-        SwingWorker<List<Booking>, Void> worker = new SwingWorker<>() {
-            @Override
-            protected List<Booking> doInBackground() throws Exception {
-                bookingService.updateOverdueBookings();
-                return bookingService.getAllBookings().stream()
-                        .filter(booking ->
-                                "ACTIVE".equalsIgnoreCase(booking.getBookingStatus())
-                                        || "OVERDUE".equalsIgnoreCase(booking.getBookingStatus()))
-                        .toList();
-            }
+        statusLabel.setText(
+                LanguageManager.text("returns.loading"));
 
-            @Override
-            protected void done() {
-                try {
-                    List<Booking> bookings = get();
-                    tableModel.setBookings(bookings);
-                    statusLabel.setText(bookings.size()
-                            + " item(s) currently awaiting return. Late fee estimate: R50 per overdue day.");
-                } catch (Exception ex) {
-                    statusLabel.setText("Could not load returns.");
-                    showError(rootMessage(ex));
-                } finally {
-                    setBusy(false);
-                }
-            }
-        };
+        SwingWorker<List<Booking>, Void> worker =
+                new SwingWorker<>() {
+
+                    @Override
+                    protected List<Booking> doInBackground()
+                            throws Exception {
+
+                        bookingService.updateOverdueBookings();
+
+                        return bookingService.getAllBookings()
+                                .stream()
+                                .filter(booking ->
+                                        "ACTIVE".equalsIgnoreCase(
+                                                booking.getBookingStatus())
+                                                || "OVERDUE".equalsIgnoreCase(
+                                                booking.getBookingStatus()))
+                                .toList();
+                    }
+
+                    @Override
+                    protected void done() {
+
+                        try {
+                            List<Booking> bookings = get();
+
+                            tableModel.setBookings(bookings);
+
+                            statusLabel.setText(
+                                    LanguageManager.text("returns.count")
+                                            .replace(
+                                                    "{count}",
+                                                    String.valueOf(bookings.size())));
+
+                        } catch (Exception ex) {
+
+                            statusLabel.setText(
+                                    LanguageManager.text("returns.loadError"));
+
+                            showError(rootMessage(ex));
+
+                        } finally {
+                            setBusy(false);
+                        }
+                    }
+                };
+
         worker.execute();
     }
 
     private void completeSelectedReturn() {
+
         int viewRow = returnsTable.getSelectedRow();
+
         if (viewRow < 0) {
-            JOptionPane.showMessageDialog(this, "Select a return record first.",
-                    "Returns Management", JOptionPane.INFORMATION_MESSAGE);
+
+            JOptionPane.showMessageDialog(
+                    this,
+                    LanguageManager.text("returns.selectFirst"),
+                    LanguageManager.text("returns.heading"),
+                    JOptionPane.INFORMATION_MESSAGE);
+
             return;
         }
 
-        int modelRow = returnsTable.convertRowIndexToModel(viewRow);
+        int modelRow =
+                returnsTable.convertRowIndexToModel(viewRow);
+
         Booking booking = tableModel.getBookingAt(modelRow);
+
         if (booking == null) {
             return;
         }
 
-        double lateFee = tableModel.getEstimatedLateFee(booking);
-        String message = "Complete return for booking #" + booking.getBookingId()
-                + "?\nReturn date: " + LocalDate.now()
-                + "\nEstimated overdue fee: R" + String.format(java.util.Locale.ROOT, "%.2f", lateFee)
-                + "\n\nThe booking will be marked COMPLETED and equipment availability refreshed.";
+        double lateFee =
+                tableModel.getEstimatedLateFee(booking);
 
-        int choice = JOptionPane.showConfirmDialog(this, message,
-                "Confirm Equipment Return", JOptionPane.YES_NO_OPTION);
+        String message =
+                LanguageManager.text("returns.confirmBooking")
+                        + booking.getBookingId()
+                        + "?\n"
+                        + LanguageManager.text("returns.returnDate")
+                        + " " + LocalDate.now()
+                        + "\n"
+                        + LanguageManager.text("returns.estimatedFee")
+                        + " " + currency.format(lateFee)
+                        + "\n\n"
+                        + LanguageManager.text("returns.confirmNote");
+
+        int choice = JOptionPane.showConfirmDialog(
+                this,
+                message,
+                LanguageManager.text("returns.confirmTitle"),
+                JOptionPane.YES_NO_OPTION,
+                JOptionPane.QUESTION_MESSAGE);
+
         if (choice != JOptionPane.YES_OPTION) {
             return;
         }
 
         setBusy(true);
-        SwingWorker<Boolean, Void> worker = new SwingWorker<>() {
-            @Override
-            protected Boolean doInBackground() throws Exception {
-                return bookingService.completeBooking(booking.getBookingId(), LocalDate.now());
-            }
 
-            @Override
-            protected void done() {
-                try {
-                    if (get()) {
-                        JOptionPane.showMessageDialog(ReturnsPanel.this,
-                                "Return completed successfully.\nBooking #" + booking.getBookingId()
-                                        + " is now COMPLETED.",
-                                "Return Completed", JOptionPane.INFORMATION_MESSAGE);
-                        loadReturns();
-                    } else {
-                        showError("The return could not be completed. Refresh and try again.");
-                        setBusy(false);
+        SwingWorker<Boolean, Void> worker =
+                new SwingWorker<>() {
+
+                    @Override
+                    protected Boolean doInBackground()
+                            throws Exception {
+
+                        return bookingService.completeBooking(
+                                booking.getBookingId(),
+                                LocalDate.now());
                     }
-                } catch (Exception ex) {
-                    showError(rootMessage(ex));
-                    setBusy(false);
-                }
-            }
-        };
+
+                    @Override
+                    protected void done() {
+
+                        try {
+
+                            if (get()) {
+
+                                JOptionPane.showMessageDialog(
+                                        ReturnsPanel.this,
+                                        LanguageManager.text(
+                                                        "returns.completed")
+                                                .replace(
+                                                        "{id}",
+                                                        String.valueOf(
+                                                                booking.getBookingId())),
+                                        LanguageManager.text(
+                                                "returns.completedTitle"),
+                                        JOptionPane.INFORMATION_MESSAGE);
+
+                                loadReturns();
+
+                            } else {
+
+                                showError(
+                                        LanguageManager.text(
+                                                "returns.failed"));
+
+                                setBusy(false);
+                            }
+
+                        } catch (Exception ex) {
+
+                            showError(rootMessage(ex));
+                            setBusy(false);
+                        }
+                    }
+                };
+
         worker.execute();
     }
 
     private void setBusy(boolean busy) {
+
         completeButton.setEnabled(!busy);
         refreshButton.setEnabled(!busy);
         returnsTable.setEnabled(!busy);
-        setCursor(busy ? Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR)
-                : Cursor.getDefaultCursor());
+
+        setCursor(
+                busy
+                        ? Cursor.getPredefinedCursor(
+                        Cursor.WAIT_CURSOR)
+                        : Cursor.getDefaultCursor());
     }
 
     private String rootMessage(Throwable throwable) {
+
         Throwable current = throwable;
+
         while (current.getCause() != null) {
             current = current.getCause();
         }
+
         return current.getMessage() == null
-                ? "An unexpected error occurred." : current.getMessage();
+                ? LanguageManager.text("common.unexpectedError")
+                : current.getMessage();
     }
 
     private void showError(String message) {
-        JOptionPane.showMessageDialog(this, message,
-                "Returns Management", JOptionPane.WARNING_MESSAGE);
+
+        JOptionPane.showMessageDialog(
+                this,
+                message,
+                LanguageManager.text("returns.heading"),
+                JOptionPane.WARNING_MESSAGE);
     }
 }
-

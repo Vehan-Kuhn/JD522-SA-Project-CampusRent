@@ -1,8 +1,5 @@
-
 package za.ac.ctu.campusrent.model;
-
 import java.time.LocalDateTime;
-
 /** Represents a user within the CampusRent system. **/
 public class User {
 

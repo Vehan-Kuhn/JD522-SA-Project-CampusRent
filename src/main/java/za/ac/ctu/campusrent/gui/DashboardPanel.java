@@ -44,27 +44,38 @@ public class DashboardPanel extends JPanel {
         setBackground(new Color(245, 247, 250));
         setBorder(new EmptyBorder(25, 25, 25, 25));
 
-        JLabel heading = new JLabel("Dashboard Overview");
+        JLabel heading = new JLabel(
+                LanguageManager.text("dashboard.heading")
+        );
         heading.setFont(new Font("Arial", Font.BOLD, 24));
 
         JPanel statistics = new JPanel(
-                new GridLayout(1, 4, 15, 15));
+                new GridLayout(1, 4, 15, 15)
+        );
         statistics.setOpaque(false);
 
         JPanel equipmentCard = createCard(
-                "Total Equipment", "Loading...", "Registered items");
+                "dashboard.totalEquipment",
+                "dashboard.registeredItems"
+        );
         equipmentValue = getCardValueLabel(equipmentCard);
 
         JPanel activeCard = createCard(
-                "Active Bookings", "Loading...", "Current rentals");
+                "dashboard.activeBookings",
+                "dashboard.currentRentals"
+        );
         activeBookingsValue = getCardValueLabel(activeCard);
 
         JPanel overdueCard = createCard(
-                "Overdue Items", "Loading...", "Require attention");
+                "dashboard.overdueItems",
+                "dashboard.requireAttention"
+        );
         overdueValue = getCardValueLabel(overdueCard);
 
         JPanel usersCard = createCard(
-                "Registered Users", "Loading...", "Students and staff");
+                "dashboard.registeredUsers",
+                "dashboard.studentsStaff"
+        );
         usersValue = getCardValueLabel(usersCard);
 
         statistics.add(equipmentCard);
@@ -75,27 +86,37 @@ public class DashboardPanel extends JPanel {
         JPanel center = new JPanel(new BorderLayout(10, 15));
         center.setOpaque(false);
 
-        JLabel activityTitle = new JLabel("Recent Activity");
+        JLabel activityTitle = new JLabel(
+                LanguageManager.text("dashboard.recentActivity")
+        );
         activityTitle.setFont(new Font("Arial", Font.BOLD, 18));
 
         activityArea = new JTextArea(
-                "Loading recent activity...");
+                LanguageManager.text("dashboard.loadingActivity")
+        );
+
         activityArea.setFont(new Font("Arial", Font.PLAIN, 14));
         activityArea.setEditable(false);
         activityArea.setLineWrap(true);
         activityArea.setWrapStyleWord(true);
         activityArea.setBackground(Color.WHITE);
-        activityArea.setBorder(new EmptyBorder(20, 20, 20, 20));
+        activityArea.setBorder(
+                new EmptyBorder(20, 20, 20, 20)
+        );
 
         JScrollPane activityScroll = new JScrollPane(activityArea);
         activityScroll.setBorder(BorderFactory.createEmptyBorder());
 
-        refreshButton = new JButton("Refresh Dashboard");
+        refreshButton = new JButton(
+                LanguageManager.text("dashboard.refresh")
+        );
+
         refreshButton.setFocusPainted(false);
         refreshButton.addActionListener(e -> loadDashboardData());
 
         JPanel activityHeader = new JPanel(new BorderLayout());
         activityHeader.setOpaque(false);
+
         activityHeader.add(activityTitle, BorderLayout.WEST);
         activityHeader.add(refreshButton, BorderLayout.EAST);
 
@@ -104,6 +125,7 @@ public class DashboardPanel extends JPanel {
 
         JPanel top = new JPanel(new BorderLayout(0, 20));
         top.setOpaque(false);
+
         top.add(heading, BorderLayout.NORTH);
         top.add(statistics, BorderLayout.CENTER);
 
@@ -174,24 +196,29 @@ public class DashboardPanel extends JPanel {
                             DashboardData data = get();
 
                             equipmentValue.setText(
-                                    String.valueOf(data.equipmentCount()));
+                                    String.valueOf(data.equipmentCount())
+                            );
 
                             activeBookingsValue.setText(
-                                    String.valueOf(data.activeCount()));
+                                    String.valueOf(data.activeCount())
+                            );
 
                             overdueValue.setText(
-                                    String.valueOf(data.overdueCount()));
+                                    String.valueOf(data.overdueCount())
+                            );
 
                             usersValue.setText(
-                                    String.valueOf(data.userCount()));
+                                    String.valueOf(data.userCount())
+                            );
 
                             displayRecentActivity(data.logs());
 
                         } catch (Exception ex) {
 
                             activityArea.setText(
-                                    "Unable to load dashboard information.\n\n"
-                                            + getErrorMessage(ex)
+                                    LanguageManager.text(
+                                            "dashboard.loadError"
+                                    ) + "\n\n" + getErrorMessage(ex)
                             );
 
                             equipmentValue.setText("-");
@@ -213,9 +240,11 @@ public class DashboardPanel extends JPanel {
         if (logs == null || logs.isEmpty()) {
 
             activityArea.setText(
-                    "Welcome to CampusRent!\n\n"
-                            + "Your equipment rental management system is ready.\n\n"
-                            + "No recorded activity is available yet."
+                    LanguageManager.text("dashboard.welcome")
+                            + "\n\n"
+                            + LanguageManager.text("dashboard.ready")
+                            + "\n\n"
+                            + LanguageManager.text("dashboard.noActivity")
             );
 
             return;
@@ -230,8 +259,11 @@ public class DashboardPanel extends JPanel {
 
         StringBuilder output = new StringBuilder();
 
-        output.append("LATEST CAMPUSRENT ACTIVITY\n");
-        output.append("========================================\n\n");
+        output.append(
+                LanguageManager.text("dashboard.latestActivity")
+        );
+
+        output.append("\n========================================\n\n");
 
         int displayed = Math.min(15, logs.size());
 
@@ -239,15 +271,27 @@ public class DashboardPanel extends JPanel {
 
             AuditLog log = logs.get(i);
 
-            output.append("Activity ")
+            output.append(
+                    LanguageManager.text("dashboard.activity")
+            );
+
+            output.append(" ")
                     .append(i + 1)
                     .append("\n");
 
-            output.append("Action: ")
+            output.append(
+                    LanguageManager.text("dashboard.action")
+            );
+
+            output.append(": ")
                     .append(safeText(log.getAction()))
                     .append("\n");
 
-            output.append("Entity: ")
+            output.append(
+                    LanguageManager.text("dashboard.entity")
+            );
+
+            output.append(": ")
                     .append(safeText(log.getEntityType()));
 
             if (log.getEntityId() != null) {
@@ -257,30 +301,49 @@ public class DashboardPanel extends JPanel {
 
             output.append("\n");
 
-            output.append("Details: ")
+            output.append(
+                    LanguageManager.text("dashboard.details")
+            );
+
+            output.append(": ")
                     .append(safeText(log.getDetails()))
                     .append("\n");
 
-            output.append("User ID: ")
+            output.append(
+                    LanguageManager.text("dashboard.userId")
+            );
+
+            output.append(": ")
                     .append(log.getUserId() == null
-                            ? "System"
+                            ? LanguageManager.text("dashboard.system")
                             : log.getUserId())
                     .append("\n");
 
-            output.append("Date: ")
+            output.append(
+                    LanguageManager.text("dashboard.date")
+            );
+
+            output.append(": ")
                     .append(log.getCreatedAt() == null
-                            ? "Unknown"
+                            ? LanguageManager.text("dashboard.unknown")
                             : log.getCreatedAt().format(DATE_FORMAT))
                     .append("\n");
 
             output.append("----------------------------------------\n\n");
         }
 
-        output.append("Showing ")
+        output.append(
+                LanguageManager.text("dashboard.showing")
+        );
+
+        output.append(" ")
                 .append(displayed)
-                .append(" of ")
+                .append(" ")
+                .append(LanguageManager.text("dashboard.of"))
+                .append(" ")
                 .append(logs.size())
-                .append(" recorded activities.");
+                .append(" ")
+                .append(LanguageManager.text("dashboard.activities"));
 
         activityArea.setText(output.toString());
         activityArea.setCaretPosition(0);
@@ -289,7 +352,7 @@ public class DashboardPanel extends JPanel {
     private String safeText(String value) {
 
         return value == null || value.isBlank()
-                ? "No details available"
+                ? LanguageManager.text("dashboard.noDetails")
                 : value;
     }
 
@@ -302,14 +365,13 @@ public class DashboardPanel extends JPanel {
         }
 
         return ex.getMessage() == null
-                ? "Unknown error"
+                ? LanguageManager.text("dashboard.unknownError")
                 : ex.getMessage();
     }
 
     private JPanel createCard(
-            String title,
-            String value,
-            String description) {
+            String titleKey,
+            String descriptionKey) {
 
         JPanel card = new JPanel();
 
@@ -318,22 +380,38 @@ public class DashboardPanel extends JPanel {
 
         card.setBorder(BorderFactory.createCompoundBorder(
                 BorderFactory.createLineBorder(
-                        new Color(225, 230, 235)),
+                        new Color(225, 230, 235)
+                ),
                 new EmptyBorder(18, 18, 18, 18)
         ));
 
-        JLabel titleLabel = new JLabel(title);
-        titleLabel.setForeground(Color.GRAY);
-        titleLabel.setFont(new Font("Arial", Font.PLAIN, 13));
+        JLabel titleLabel = new JLabel(
+                LanguageManager.text(titleKey)
+        );
 
-        JLabel valueLabel = new JLabel(value);
+        titleLabel.setForeground(Color.GRAY);
+        titleLabel.setFont(
+                new Font("Arial", Font.PLAIN, 13)
+        );
+
+        JLabel valueLabel = new JLabel(
+                LanguageManager.text("dashboard.loading")
+        );
+
         valueLabel.setName("dashboardCardValue");
         valueLabel.setForeground(new Color(41, 128, 185));
-        valueLabel.setFont(new Font("Arial", Font.BOLD, 30));
+        valueLabel.setFont(
+                new Font("Arial", Font.BOLD, 30)
+        );
 
-        JLabel descriptionLabel = new JLabel(description);
+        JLabel descriptionLabel = new JLabel(
+                LanguageManager.text(descriptionKey)
+        );
+
         descriptionLabel.setForeground(Color.GRAY);
-        descriptionLabel.setFont(new Font("Arial", Font.PLAIN, 11));
+        descriptionLabel.setFont(
+                new Font("Arial", Font.PLAIN, 11)
+        );
 
         card.add(titleLabel);
         card.add(Box.createVerticalStrut(12));
@@ -355,7 +433,8 @@ public class DashboardPanel extends JPanel {
         }
 
         throw new IllegalStateException(
-                "Dashboard statistic label could not be found.");
+                "Dashboard statistic label could not be found."
+        );
     }
 
     private record DashboardData(
