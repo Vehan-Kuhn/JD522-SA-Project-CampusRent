@@ -27,4 +27,4 @@ equipment_id,campus_id,serial_number,equipment_name,description,category,daily_r
 "27","1","CR-EQ-017","Projector Sample 17","Sample equipment record 17","PROJECTOR","250.0","GOOD","AVAILABLE"
 "28","1","CR-EQ-018","Camera Sample 18","Sample equipment record 18","CAMERA","180.0","GOOD","AVAILABLE"
 "29","1","CR-EQ-019","Tablet Sample 19","Sample equipment record 19","TABLET","100.0","GOOD","AVAILABLE"
-"30","1","CR-EQ-020","Network Kit Sample 20","Sample equipment record 20","NETWORK_KIT","200.0","GOOD","AVAILABLE"
+"30","1","CR-EQ-020","Network Kit Sample 20","Sample equipment record 20","NETWORK_KIT","200.0","GOOD","BOOKED"
