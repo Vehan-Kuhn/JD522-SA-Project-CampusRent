@@ -119,6 +119,9 @@ CampusRent/
 │               ├── Messages_en_ZA.properties
 │               ├── Messages_af_ZA.properties
 │               └── Messages_zu_ZA.properties
+|            |
+|            |____db.properties
+|            |____schema.sql
 │
 ├── pom.xml
 ├── .gitignore
